@@ -47,35 +47,51 @@
       letter-spacing: -0.5px;
     }
 
-    /* Botón único */
-    .btn-registro {
-      background: #2ecc71;
-      color: white;
-      border: none;
-      border-radius: 12px;
+    /* Botones */
+    .buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      width: 100%;
+    }
+
+    .btn {
       padding: 18px 32px;
       font-size: 20px;
       font-weight: 700;
+      border: none;
+      border-radius: 12px;
       cursor: pointer;
       transition: all 0.25s ease;
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 12px;
+      text-decoration: none;
+      color: white;
+    }
+
+    .btn-registro {
+      background: #2ecc71;
       box-shadow: 0 4px 12px rgba(46, 204, 113, 0.3);
     }
 
-    .btn-registro:hover {
-      background: #27ae60;
-      transform: translateY(-3px);
-      box-shadow: 0 6px 16px rgba(46, 204, 113, 0.4);
+    .btn-nomina {
+      background: #9b59b6; /* Morado profesional */
+      box-shadow: 0 4px 12px rgba(155, 89, 182, 0.3);
     }
 
-    .btn-registro:active {
+    .btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+    }
+
+    .btn:active {
       transform: translateY(0);
     }
 
-    /* Icono de reloj */
-    .icono-reloj {
+    /* Iconos */
+    .icono-reloj, .icono-nomina {
       font-size: 24px;
     }
 
@@ -87,7 +103,7 @@
       h1 {
         font-size: 24px;
       }
-      .btn-registro {
+      .btn {
         font-size: 18px;
         padding: 16px 24px;
       }
@@ -96,15 +112,23 @@
 </head>
 <body>
   <div class="container">
-    <!-- 🔷 Reemplaza "logo-empresa.png" con tu logo -->
+    <!-- Logo -->
     <img src="logo-empresa.png" alt="Logo de la Empresa" class="logo" id="logo">
 
     <h1>Sistema de Control Horario</h1>
 
-    <a href="registro.html" class="btn-registro">
-      <span class="icono-reloj">🕖</span>
-      REGISTRAR HORA
-    </a>
+    <!-- Botones -->
+    <div class="buttons">
+      <a href="registro.html" class="btn btn-registro">
+        <span class="icono-reloj">⏰</span>
+        REGISTRAR HORA
+      </a>
+      
+      <a href="nomina.html" class="btn btn-nomina">
+        <span class="icono-nomina">📄</span>
+        DESCARGAR NÓMINA
+      </a>
+    </div>
   </div>
 
   <script>
@@ -119,7 +143,7 @@
       this.style.justifyContent = 'center';
       this.style.fontSize = '48px';
       this.style.fontWeight = 'bold';
-      this.textContent = 'LC'; // Cambia por las iniciales de tu empresa
+      this.textContent = 'LC';
     };
   </script>
 </body>

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Descargar Nómina</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9; }
+    .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 10px; }
+    h2 { text-align: center; color: #2c3e50; margin-bottom: 20px; }
+    input, button {
+      width: 100%; padding: 12px; margin: 8px 0; font-size: 16px;
+    }
+    button { background: #3498db; color: white; border: none; border-radius: 6px; cursor: pointer; }
+    #mensaje {
+      margin-top: 15px; padding: 10px; text-align: center; border-radius: 6px;
+    }
+    .success { background: #d4edda; color: #155724; }
+    .error { background: #f8d7da; color: #721c24; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Descargar tu Nómina</h2>
+    <p>Introduce tu PIN para acceder a tu última nómina.</p>
+    
+    <input type="number" id="pin" placeholder="Tu PIN (4 dígitos)" min="1000" max="9999" />
+    <button id="descargar">📥 Descargar Nómina</button>
+    
+    <div id="mensaje"></div>
+  </div>
+
+  <script>
+    // 👇 REEMPLAZA "tu-usuario" por tu nombre de usuario de GitHub
+    const GITHUB_USER = "ErWoo11";
+    const GITHUB_REPO = "nominas-empresa";
+
+    async function descargarNomina() {
+      const pin = document.getElementById('pin').value.trim();
+      const msg = document.getElementById('mensaje');
+
+      if (!pin || pin.length !== 4 || isNaN(pin)) {
+        msg.textContent = '⚠️ Introduce un PIN válido de 4 dígitos.';
+        msg.className = 'error';
+        return;
+      }
+
+      const url = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/main/${pin}.pdf`;
+
+      try {
+        // Verificar si el archivo existe
+        const response = await fetch(url, { method: 'HEAD' });
+        if (response.ok) {
+          window.open(url, '_blank'); // Abre en nueva pestaña (descarga automática)
+          msg.textContent = '✅ Descargando nómina...';
+          msg.className = 'success';
+        } else {
+          throw new Error('No encontrada');
+        }
+      } catch (err) {
+        msg.textContent = '❌ No hay nómina disponible para este PIN.';
+        msg.className = 'error';
+      }
+    }
+
+    document.getElementById('descargar').addEventListener('click', descargarNomina);
+  </script>
+</body>
+</html>
