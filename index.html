@@ -33,7 +33,7 @@
       width: 100%;
       max-width: 300px;
       height: auto;
-      margin-bottom: 25px;
+      margin-bottom: 30px;
       border-radius: 12px;
       box-shadow: 0 4px 20px rgba(0,0,0,0.1);
     }
@@ -42,49 +42,41 @@
     h1 {
       font-size: 28px;
       color: #2c3e50;
-      margin-bottom: 35px;
+      margin-bottom: 40px;
       font-weight: 700;
       letter-spacing: -0.5px;
     }
 
-    /* Botones */
-    .buttons {
-      display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
-    .btn {
-      flex: 1;
-      min-width: 140px;
-      padding: 16px;
-      font-size: 18px;
-      font-weight: 600;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      text-decoration: none;
-      display: inline-block;
-      color: white;
-    }
-
+    /* Botón único */
     .btn-registro {
       background: #2ecc71;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 18px 32px;
+      font-size: 20px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 4px 12px rgba(46, 204, 113, 0.3);
     }
 
-    .btn-admin {
-      background: #3498db;
-    }
-
-    .btn:hover {
+    .btn-registro:hover {
+      background: #27ae60;
       transform: translateY(-3px);
-      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+      box-shadow: 0 6px 16px rgba(46, 204, 113, 0.4);
     }
 
-    .btn:active {
+    .btn-registro:active {
       transform: translateY(0);
+    }
+
+    /* Icono de reloj */
+    .icono-reloj {
+      font-size: 24px;
     }
 
     /* Responsive */
@@ -95,32 +87,32 @@
       h1 {
         font-size: 24px;
       }
-      .btn {
-        font-size: 16px;
-        padding: 14px;
+      .btn-registro {
+        font-size: 18px;
+        padding: 16px 24px;
       }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- 🔷 Reemplaza "logo-empresa.png" con la ruta de tu logo -->
+    <!-- 🔷 Reemplaza "logo-empresa.png" con tu logo -->
     <img src="logo-empresa.png" alt="Logo de la Empresa" class="logo" id="logo">
 
     <h1>Sistema de Control Horario</h1>
 
-    <div class="buttons">
-      <a href="registro.html" class="btn btn-registro">📱 Registro</a>
-      <a href="admin.html" class="btn btn-admin">👨‍💼 Administración</a>
-    </div>
+    <a href="registro.html" class="btn-registro">
+      <span class="icono-reloj">🕖</span>
+      REGISTRAR HORA
+    </a>
   </div>
 
   <script>
-    // Opcional: si no tienes logo, muestra iniciales
+    // Si no hay logo, muestra iniciales
     document.getElementById('logo').onerror = function() {
-      this.src = ''; // elimina el src
+      this.src = '';
       this.alt = 'LOGO';
-      this.style.backgroundColor = '#3498db';
+      this.style.backgroundColor = '#2c3e50';
       this.style.color = 'white';
       this.style.display = 'flex';
       this.style.alignItems = 'center';
