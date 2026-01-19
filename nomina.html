@@ -5,33 +5,117 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Descargar Nómina</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9; }
-    .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 10px; }
-    h2 { text-align: center; color: #2c3e50; margin-bottom: 20px; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: url('fondo.png') repeat;
+      background-size: 300px;
+      background-color: #f9f9f9;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    /* Contenedor principal (centrado) */
+    .main-content {
+      max-width: 500px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    /* Logo */
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .logo {
+      width: 100%;
+      max-width: 300px;
+      height: auto;
+      border-radius: 16px;
+      box-shadow: 0 6px 25px rgba(0,0,0,0.15);
+      margin: 0 auto 40px;
+      display: block;
+    }
+
+    #logo.fallback {
+      background: #2c3e50;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      font-weight: bold;
+      border-radius: 16px;
+      box-shadow: 0 6px 25px rgba(0,0,0,0.15);
+      margin: 0 auto 40px;
+    }
+
+    /* Contenido con fondo blanco */
+    .container {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      color: #2c3e50;
+      margin-bottom: 20px;
+    }
+
     input, button {
-      width: 100%; padding: 12px; margin: 8px 0; font-size: 16px;
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      font-size: 16px;
     }
-    button { background: #3498db; color: white; border: none; border-radius: 6px; cursor: pointer; }
+
+    button {
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
     #mensaje {
-      margin-top: 15px; padding: 10px; text-align: center; border-radius: 6px;
+      margin-top: 15px;
+      padding: 10px;
+      text-align: center;
+      border-radius: 6px;
     }
+
     .success { background: #d4edda; color: #155724; }
     .error { background: #f8d7da; color: #721c24; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>Descargar tu Nómina</h2>
-    <p>Introduce tu PIN para acceder a tu última nómina.</p>
-    
-    <input type="number" id="pin" placeholder="Tu PIN (4 dígitos)" min="1000" max="9999" />
-    <button id="descargar">📥 Descargar Nómina</button>
-    
-    <div id="mensaje"></div>
+  <!-- Logo centrado -->
+  <div class="main-content">
+    <div class="header">
+      <img src="logo.png" alt="Logo de la Empresa" class="logo" id="logo">
+    </div>
+
+    <!-- Contenido con fondo blanco -->
+    <div class="container">
+      <h2>Descargar tu Nómina</h2>
+      <p>Introduce tu PIN para acceder a tu última nómina.</p>
+      
+      <input type="number" id="pin" placeholder="Tu PIN (4 dígitos)" min="1000" max="9999" />
+      <button id="descargar">📥 Descargar Nómina</button>
+      
+      <div id="mensaje"></div>
+    </div>
   </div>
 
   <script>
-    // 👇 REEMPLAZA "tu-usuario" por tu nombre de usuario de GitHub
+    // 👇 REEMPLAZA "ErWoo11" por tu usuario de GitHub
     const GITHUB_USER = "ErWoo11";
     const GITHUB_REPO = "nominas-empresa";
 
@@ -48,10 +132,9 @@
       const url = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/main/${pin}.pdf`;
 
       try {
-        // Verificar si el archivo existe
         const response = await fetch(url, { method: 'HEAD' });
         if (response.ok) {
-          window.open(url, '_blank'); // Abre en nueva pestaña (descarga automática)
+          window.open(url, '_blank');
           msg.textContent = '✅ Descargando nómina...';
           msg.className = 'success';
         } else {
@@ -64,6 +147,12 @@
     }
 
     document.getElementById('descargar').addEventListener('click', descargarNomina);
+
+    // Fallback para logo
+    document.getElementById('logo').onerror = function() {
+      this.classList.add('fallback');
+      this.textContent = 'LC';
+    };
   </script>
 </body>
 </html>

@@ -5,70 +5,201 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin - Control Horario</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; margin: 0; }
-    .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 10px; }
-    h2, h3 { color: #2c3e50; text-align: center; }
-    input, button { width: 100%; padding: 12px; margin: 8px 0; font-size: 16px; box-sizing: border-box; }
-    button { background: #3498db; color: white; border: none; border-radius: 6px; cursor: pointer; }
-    #logout { background: #e74c3c; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-    th { background: #f2f2f2; }
-    #datos, #login, #gestion-trabajadores { margin-top: 20px; }
-    .hidden { display: none; }
-    .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-    .tab-btn { flex: 1; background: #bdc3c7; cursor: pointer; font-weight: bold; }
-    .tab-btn.active { background: #3498db; color: white; }
-    .msg { padding: 8px; margin: 10px 0; border-radius: 4px; }
-    .success { background: #d4edda; color: #155724; }
-    .error { background: #f8d7da; color: #721c24; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: url('fondo.png') repeat;
+      background-size: 300px;
+      background-color: #f5f5f5;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    .main-content {
+      max-width: 800px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    /* Logo */
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .logo {
+      width: 100%;
+      max-width: 300px;
+      height: auto;
+      border-radius: 16px;
+      box-shadow: 0 6px 25px rgba(0,0,0,0.15);
+      margin: 0 auto 40px;
+      display: block;
+    }
+
+    #logo.fallback {
+      background: #2c3e50;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      font-weight: bold;
+      border-radius: 16px;
+      box-shadow: 0 6px 25px rgba(0,0,0,0.15);
+      margin: 0 auto 40px;
+    }
+
+    /* Contenido */
+    .container {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+
+    h2, h3 {
+      color: #2c3e50;
+      text-align: center;
+    }
+
+    input, button {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+
+    button {
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    #logout {
+      background: #e74c3c;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
+
+    th {
+      background: #f2f2f2;
+    }
+
+    #datos, #login, #gestion-trabajadores {
+      margin-top: 20px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      background: #bdc3c7;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .tab-btn.active {
+      background: #3498db;
+      color: white;
+    }
+
+    .msg {
+      padding: 8px;
+      margin: 10px 0;
+      border-radius: 4px;
+    }
+
+    .success {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .error {
+      background: #f8d7da;
+      color: #721c24;
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>Panel de Administración</h2>
-
-    <!-- Login -->
-    <div id="login">
-      <p>Inicia sesión para acceder.</p>
-      <input type="email" id="email" placeholder="Tu email" />
-      <input type="password" id="password" placeholder="Contraseña" />
-      <button id="btn-login">🔐 Iniciar sesión</button>
-      <div id="msg-login"></div>
+  <div class="main-content">
+    <!-- Logo -->
+    <div class="header">
+      <img src="logo.png" alt="Logo de la Empresa" class="logo" id="logo">
     </div>
 
-    <!-- Panel principal -->
-    <div id="datos" class="hidden">
-      <p>Bienvenido, <span id="user-email"></span> | <button id="logout">Cerrar sesión</button></p>
+    <!-- Contenido -->
+    <div class="container">
+      <h2>Panel de Administración</h2>
 
-      <!-- Pestañas -->
-      <div class="tabs">
-        <button class="tab-btn active" data-tab="registros">Registros</button>
-        <button class="tab-btn" data-tab="trabajadores">Gestión de Trabajadores</button>
+      <!-- Login -->
+      <div id="login">
+        <p>Inicia sesión para acceder.</p>
+        <input type="email" id="email" placeholder="Tu email" />
+        <input type="password" id="password" placeholder="Contraseña" />
+        <button id="btn-login">🔐 Iniciar sesión</button>
+        <div id="msg-login"></div>
       </div>
 
-      <!-- Registros -->
-      <div id="tab-registros">
-        <button id="cargar">↻ Cargar registros</button>
-        <button id="borrar-registros">🗑️ Borrar todos los registros</button>
-        <button id="exportar">📥 Exportar a Excel</button>
-        <table>
-          <thead><tr><th>Nombre</th><th>Tipo</th><th>Fecha y Hora</th></tr></thead>
-          <tbody id="tabla-cuerpo"></tbody>
-        </table>
-      </div>
+      <!-- Panel principal -->
+      <div id="datos" class="hidden">
+        <p>Bienvenido, <span id="user-email"></span> | <button id="logout">Cerrar sesión</button></p>
 
-      <!-- Trabajadores -->
-      <div id="tab-trabajadores" class="hidden">
-        <h3>Gestión de Trabajadores</h3>
-        <input type="text" id="nuevo-pin" placeholder="PIN (4 dígitos)" maxlength="4" />
-        <input type="text" id="nuevo-nombre" placeholder="Nombre completo" />
-        <button id="btn-agregar">➕ Añadir trabajador</button>
-        <div id="msg-trabajadores"></div>
-        <table id="tabla-trabajadores">
-          <thead><tr><th>PIN</th><th>Nombre</th><th>Acción</th></tr></thead>
-          <tbody id="cuerpo-trabajadores"></tbody>
-        </table>
+        <!-- Pestañas -->
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="registros">Registros</button>
+          <button class="tab-btn" data-tab="trabajadores">Gestión de Trabajadores</button>
+        </div>
+
+        <!-- Registros -->
+        <div id="tab-registros">
+          <button id="cargar">↻ Cargar registros</button>
+          <button id="borrar-registros">🗑️ Borrar todos los registros</button>
+          <button id="exportar">📥 Exportar a Excel</button>
+          <table>
+            <thead><tr><th>Nombre</th><th>Tipo</th><th>Fecha y Hora</th></tr></thead>
+            <tbody id="tabla-cuerpo"></tbody>
+          </table>
+        </div>
+
+        <!-- Trabajadores -->
+        <div id="tab-trabajadores" class="hidden">
+          <h3>Gestión de Trabajadores</h3>
+          <input type="text" id="nuevo-pin" placeholder="PIN (4 dígitos)" maxlength="4" />
+          <input type="text" id="nuevo-nombre" placeholder="Nombre completo" />
+          <button id="btn-agregar">➕ Añadir trabajador</button>
+          <div id="msg-trabajadores"></div>
+          <table id="tabla-trabajadores">
+            <thead><tr><th>PIN</th><th>Nombre</th><th>Acción</th></tr></thead>
+            <tbody id="cuerpo-trabajadores"></tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
@@ -77,9 +208,9 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
 
   <script>
-    // 🔑 Configuración de Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyACVAm_3qDdghFNixYIYF6ToYOf_dIVodE",
       authDomain: "control-horario-obra.firebaseapp.com",
@@ -89,28 +220,13 @@
       appId: "1:566402636945:web:7a8fa39c373ae62a49b330"
     };
 
-    // Inicializar Firebase
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // Elementos del DOM
     const loginDiv = document.getElementById('login');
     const datosDiv = document.getElementById('datos');
     const userEmailSpan = document.getElementById('user-email');
-
-    // ✅ AUTENTICACIÓN: se registra inmediatamente
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        loginDiv.classList.add('hidden');
-        datosDiv.classList.remove('hidden');
-        userEmailSpan.textContent = user.email;
-        cargarRegistros();
-      } else {
-        loginDiv.classList.remove('hidden');
-        datosDiv.classList.add('hidden');
-      }
-    });
 
     // Formatear fecha
     function formatearFecha(fecha) {
@@ -124,52 +240,9 @@
       }).format(fecha);
     }
 
-    // --- FUNCIONES DE REGISTROS ---
-    async function cargarRegistros() {
-      const cuerpo = document.getElementById('tabla-cuerpo');
-      cuerpo.innerHTML = '<tr><td colspan="3">Cargando...</td></tr>';
-      try {
-        const snapshot = await db.collection('registros_publicos')
-          .orderBy('fechaHora', 'desc')
-          .limit(500)
-          .get();
-
-        const filas = [];
-        const datos = [];
-        snapshot.forEach(doc => {
-          const r = doc.data();
-          datos.push(r);
-          filas.push(`<tr><td>${r.nombre}</td><td>${r.tipo}</td><td>${formatearFecha(r.fechaHora)}</td></tr>`);
-        });
-        cuerpo.innerHTML = filas.join('');
-        window.datosExportar = datos;
-      } catch (err) {
-        cuerpo.innerHTML = '<tr><td colspan="3">Error al cargar</td></tr>';
-        console.error(err);
-      }
-    }
-
-    async function borrarTodosRegistros() {
-      if (!confirm("⚠️ ¿Estás seguro? Esto borrará TODOS los registros de jornada.")) return;
-      if (!confirm("🔴 ¡CONFIRMACIÓN FINAL! ¿Borrar todos los registros?")) return;
-
-      try {
-        const snapshot = await db.collection('registros_publicos').get();
-        const batch = db.batch();
-        snapshot.docs.forEach(doc => batch.delete(doc.ref));
-        await batch.commit();
-        alert('✅ Todos los registros han sido eliminados.');
-        cargarRegistros();
-      } catch (err) {
-        alert('❌ Error al borrar: ' + err.message);
-        console.error(err);
-      }
-    }
-
-    // --- EXPORTAR A EXCEL (solo si SheetJS está disponible) ---
+    // --- EXPORTAR A EXCEL ---
     async function exportarExcel(datos) {
       if (!window.XLSX) {
-        // Cargar SheetJS dinámicamente
         const script = document.createElement('script');
         script.src = 'https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js';
         script.onload = () => exportarConSheetJS(datos);
@@ -222,7 +295,49 @@
       XLSX.writeFile(wb, "registros_horario.xlsx");
     }
 
-    // --- GESTIÓN DE TRABAJADORES ---
+    // --- REGISTROS ---
+    async function cargarRegistros() {
+      const cuerpo = document.getElementById('tabla-cuerpo');
+      cuerpo.innerHTML = '<tr><td colspan="3">Cargando...</td></tr>';
+      try {
+        const snapshot = await db.collection('registros_publicos')
+          .orderBy('fechaHora', 'desc')
+          .limit(500)
+          .get();
+
+        const filas = [];
+        const datos = [];
+        snapshot.forEach(doc => {
+          const r = doc.data();
+          datos.push(r);
+          filas.push(`<tr><td>${r.nombre}</td><td>${r.tipo}</td><td>${formatearFecha(r.fechaHora)}</td></tr>`);
+        });
+        cuerpo.innerHTML = filas.join('');
+        window.datosExportar = datos;
+      } catch (err) {
+        cuerpo.innerHTML = '<tr><td colspan="3">Error al cargar</td></tr>';
+        console.error(err);
+      }
+    }
+
+    async function borrarTodosRegistros() {
+      if (!confirm("⚠️ ¿Estás seguro? Esto borrará TODOS los registros de jornada.")) return;
+      if (!confirm("🔴 ¡CONFIRMACIÓN FINAL! ¿Borrar todos los registros?")) return;
+
+      try {
+        const snapshot = await db.collection('registros_publicos').get();
+        const batch = db.batch();
+        snapshot.docs.forEach(doc => batch.delete(doc.ref));
+        await batch.commit();
+        alert('✅ Todos los registros han sido eliminados.');
+        cargarRegistros();
+      } catch (err) {
+        alert('❌ Error al borrar: ' + err.message);
+        console.error(err);
+      }
+    }
+
+    // --- TRABAJADORES ---
     async function cargarTrabajadores() {
       const cuerpo = document.getElementById('cuerpo-trabajadores');
       cuerpo.innerHTML = '<tr><td colspan="3">Cargando...</td></tr>';
@@ -286,7 +401,7 @@
       }
     }
 
-    // Funciones globales para botones
+    // Funciones globales
     window.eliminarTrabajador = async (id) => {
       if (!confirm('¿Eliminar este trabajador?')) return;
       try {
@@ -338,7 +453,7 @@
       });
     });
 
-    // --- EVENTOS DE BOTONES ---
+    // --- AUTENTICACIÓN ---
     document.getElementById('btn-login').addEventListener('click', async () => {
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
@@ -357,6 +472,20 @@
     });
 
     document.getElementById('logout').addEventListener('click', () => auth.signOut());
+
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        loginDiv.classList.add('hidden');
+        datosDiv.classList.remove('hidden');
+        userEmailSpan.textContent = user.email;
+        cargarRegistros();
+      } else {
+        loginDiv.classList.remove('hidden');
+        datosDiv.classList.add('hidden');
+      }
+    });
+
+    // --- BOTONES ---
     document.getElementById('cargar').addEventListener('click', cargarRegistros);
     document.getElementById('borrar-registros').addEventListener('click', borrarTodosRegistros);
     document.getElementById('exportar').addEventListener('click', () => {
@@ -365,8 +494,11 @@
     });
     document.getElementById('btn-agregar').addEventListener('click', agregarTrabajador);
 
-    // Cargar registros al inicio (por si hay usuario logueado)
-    cargarRegistros();
+    // Fallback para logo
+    document.getElementById('logo').onerror = function() {
+      this.classList.add('fallback');
+      this.textContent = 'LC';
+    };
   </script>
 </body>
 </html>

@@ -18,8 +18,9 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      padding: 20px;
+      /* 👇 Centrado más arriba */
+      justify-content: flex-start;
+      padding: 40px 20px 20px; /* 👈 más espacio arriba */
       text-align: center;
     }
 
@@ -31,16 +32,24 @@
     /* Logo */
     .logo {
       width: 100%;
-      max-width: 300px;
+      max-width: 350px; /* 👈 más grande */
       height: auto;
-      margin-bottom: 30px;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      margin-bottom: 50px; /* 👈 más espacio antes del título */
+      border-radius: 16px;
+      box-shadow: 0 6px 25px rgba(0,0,0,0.15);
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    /* Efecto al pasar el ratón */
+    .logo:hover {
+      transform: scale(1.03) translateY(-5px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
     }
 
     /* Título */
     h1 {
-      font-size: 28px;
+      font-size: 32px; /* 👈 un poco más grande */
       color: #2c3e50;
       margin-bottom: 40px;
       font-weight: 700;
@@ -77,7 +86,7 @@
     }
 
     .btn-nomina {
-      background: #9b59b6; /* Morado profesional */
+      background: #9b59b6;
       box-shadow: 0 4px 12px rgba(155, 89, 182, 0.3);
     }
 
@@ -98,10 +107,11 @@
     /* Responsive */
     @media (max-width: 500px) {
       .logo {
-        max-width: 250px;
+        max-width: 300px;
+        margin-bottom: 40px;
       }
       h1 {
-        font-size: 24px;
+        font-size: 28px;
       }
       .btn {
         font-size: 18px;
@@ -113,7 +123,7 @@
 <body>
   <div class="container">
     <!-- Logo -->
-    <img src="logo-empresa.png" alt="Logo de la Empresa" class="logo" id="logo">
+    <img src="logo.png" alt="Logo de la Empresa" class="logo" id="logo">
 
     <h1>Sistema de Control Horario</h1>
 
@@ -141,8 +151,10 @@
       this.style.display = 'flex';
       this.style.alignItems = 'center';
       this.style.justifyContent = 'center';
-      this.style.fontSize = '48px';
+      this.style.fontSize = '60px'; /* 👈 más grande en modo fallback */
       this.style.fontWeight = 'bold';
+      this.style.borderRadius = '16px';
+      this.style.boxShadow = '0 6px 25px rgba(0,0,0,0.15)';
       this.textContent = 'LC';
     };
   </script>
