@@ -68,7 +68,7 @@
       text-align: center;
     }
 
-    input, button {
+    input, button, select {
       width: 100%;
       padding: 12px;
       margin: 8px 0;
@@ -104,7 +104,7 @@
       background: #f2f2f2;
     }
 
-    #datos, #login, #gestion-trabajadores {
+    #datos, #login, #gestion-trabajadores, #pines-acceso {
       margin-top: 20px;
     }
 
@@ -145,6 +145,17 @@
       background: #f8d7da;
       color: #721c24;
     }
+    
+    .btn-usar-pin {
+      background: #2ecc71;
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+    
+    .btn-borrar-todo {
+      background: #e74c3c;
+      margin-top: 15px;
+    }
   </style>
 </head>
 <body>
@@ -175,6 +186,7 @@
         <div class="tabs">
           <button class="tab-btn active" data-tab="registros">Registros</button>
           <button class="tab-btn" data-tab="trabajadores">Gestión de Trabajadores</button>
+          <button class="tab-btn" data-tab="pines">PINs de acceso</button>
         </div>
 
         <!-- Registros -->
@@ -182,6 +194,7 @@
           <button id="cargar">↻ Cargar registros</button>
           <button id="borrar-registros">🗑️ Borrar todos los registros</button>
           <button id="exportar">📥 Exportar a Excel</button>
+          
           <table>
             <thead><tr><th>Nombre</th><th>Tipo</th><th>Fecha y Hora</th></tr></thead>
             <tbody id="tabla-cuerpo"></tbody>
@@ -192,13 +205,58 @@
         <div id="tab-trabajadores" class="hidden">
           <h3>Gestión de Trabajadores</h3>
           <input type="text" id="nuevo-pin" placeholder="PIN (4 dígitos)" maxlength="4" />
+          <button id="btn-generar-pin">🎲 Generar PIN aleatorio</button>
           <input type="text" id="nuevo-nombre" placeholder="Nombre completo" />
           <button id="btn-agregar">➕ Añadir trabajador</button>
+          
+          <select id="orden-trabajadores">
+            <option value="pin">Ordenar por PIN</option>
+            <option value="nombre">Ordenar por nombre</option>
+            <option value="registro">Ordenar por fecha de registro</option>
+          </select>
+          
           <div id="msg-trabajadores"></div>
           <table id="tabla-trabajadores">
             <thead><tr><th>PIN</th><th>Nombre</th><th>Acción</th></tr></thead>
             <tbody id="cuerpo-trabajadores"></tbody>
           </table>
+        </div>
+
+        <!-- PINs de acceso -->
+        <div id="tab-pines" class="hidden">
+          <h3>🔐 PINs de Acceso</h3>
+          
+          <button id="generar-pin" style="margin-bottom: 15px;">🔄 Generar nuevo PIN</button>
+          
+          <input type="text" id="comentario-pin" placeholder="Comentario opcional (ej: Obra Norte)" style="margin-bottom: 15px;" />
+          <div id="msg-pin"></div>
+          
+          <!-- Generador de URL -->
+          <div style="margin-top: 15px;">
+            <h4>🔗 Enlace de acceso</h4>
+            <input type="text" id="url-acceso" placeholder="URL se generará aquí" readonly style="margin-bottom: 10px;" />
+            <button id="generar-url">📋 Copiar enlace</button>
+          </div>
+          
+          <h4 style="margin-top: 20px;">Lista de PINs</h4>
+          <table id="tabla-pines">
+            <thead>
+              <tr>
+                <th>PIN</th>
+                <th>Fecha</th>
+                <th>Comentario</th>
+                <th>Estado</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody id="cuerpo-pines">
+              <tr><td colspan="5">Cargando PINs...</td></tr>
+            </tbody>
+          </table>
+          
+          <button id="borrar-todos-pins" class="btn-borrar-todo" style="margin-top: 15px;">
+            🗑️ Borrar todos los PINs
+          </button>
         </div>
       </div>
     </div>
@@ -240,6 +298,14 @@
       }).format(fecha);
     }
 
+    // Función para convertir milisegundos a HH:MM
+    function msToHHMM(ms) {
+      const totalMinutos = Math.floor(ms / (1000 * 60));
+      const horas = Math.floor(totalMinutos / 60);
+      const minutos = totalMinutos % 60;
+      return `${horas}:${minutos.toString().padStart(2, '0')}`;
+    }
+
     // --- EXPORTAR A EXCEL ---
     async function exportarExcel(datos) {
       if (!window.XLSX) {
@@ -255,12 +321,12 @@
 
     function exportarConSheetJS(datos) {
       const XLSX = window.XLSX;
+      
       const registros = datos.map(r => ({
         Nombre: r.nombre,
         Tipo: r.tipo,
         'Fecha y Hora': formatearFecha(r.fechaHora)
       }));
-
       const ws1 = XLSX.utils.json_to_sheet(registros);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws1, "Registros");
@@ -268,10 +334,8 @@
       const trabajadores = {};
       datos.forEach(r => {
         if (!trabajadores[r.nombre]) trabajadores[r.nombre] = [];
-        trabajadores[r.nombre].push({
-          tipo: r.tipo,
-          fecha: r.fechaHora.toDate ? r.fechaHora.toDate() : new Date(r.fechaHora)
-        });
+        const fecha = r.fechaHora.toDate ? r.fechaHora.toDate() : new Date(r.fechaHora);
+        trabajadores[r.nombre].push({ tipo: r.tipo, fecha: fecha });
       });
 
       const computo = [];
@@ -286,8 +350,9 @@
             ultimaEntrada = null;
           }
         }
-        const totalHoras = totalMs / (1000 * 60 * 60);
-        computo.push({ Nombre: nombre, 'Horas totales': parseFloat(totalHoras.toFixed(2)) });
+        if (totalMs > 0) {
+          computo.push({ Nombre: nombre, 'Horas (HH:MM)': msToHHMM(totalMs) });
+        }
       }
 
       const ws2 = XLSX.utils.json_to_sheet(computo);
@@ -343,28 +408,79 @@
       cuerpo.innerHTML = '<tr><td colspan="3">Cargando...</td></tr>';
       try {
         const snapshot = await db.collection('trabajadores').get();
-        const filas = [];
-        const lista = {};
+        const lista = [];
         snapshot.forEach(doc => {
           const data = doc.data();
-          lista[doc.id] = { id: doc.id, pin: data.pin, nombre: data.nombre };
-          filas.push(`
-            <tr>
-              <td>${data.pin}</td>
-              <td>${data.nombre}</td>
-              <td>
-                <button onclick="editarTrabajador('${doc.id}', '${data.pin.replace(/'/g, "\\'")}', '${data.nombre.replace(/'/g, "\\'")}')" style="margin-right:5px;">✏️</button>
-                <button onclick="eliminarTrabajador('${doc.id}')">🗑️</button>
-              </td>
-            </tr>
-          `);
+          lista.push({
+            id: doc.id,
+            pin: data.pin,
+            nombre: data.nombre,
+            fechaRegistro: data.fechaRegistro
+          });
         });
-        window.listaTrabajadores = lista;
+
+        const criterio = document.getElementById('orden-trabajadores').value;
+        if (criterio === 'pin') {
+          lista.sort((a, b) => parseInt(a.pin) - parseInt(b.pin));
+        } else if (criterio === 'nombre') {
+          lista.sort((a, b) => a.nombre.localeCompare(b.nombre));
+        } else if (criterio === 'registro') {
+          lista.sort((a, b) => {
+            const fechaA = a.fechaRegistro?.toDate ? a.fechaRegistro.toDate().getTime() : 0;
+            const fechaB = b.fechaRegistro?.toDate ? b.fechaRegistro.toDate().getTime() : 0;
+            return fechaB - fechaA;
+          });
+        }
+
+        const filas = lista.map(t => `
+          <tr>
+            <td>${t.pin}</td>
+            <td>${t.nombre}</td>
+            <td>
+              <button onclick="editarTrabajador('${t.id}', '${t.pin.replace(/'/g, "\\'")}', '${t.nombre.replace(/'/g, "\\'")}')" style="margin-right:5px;">✏️</button>
+              <button onclick="eliminarTrabajador('${t.id}')">🗑️</button>
+            </td>
+          </tr>
+        `);
+
+        window.listaTrabajadores = {};
+        lista.forEach(t => {
+          window.listaTrabajadores[t.id] = t;
+        });
+
         cuerpo.innerHTML = filas.join('');
       } catch (err) {
         cuerpo.innerHTML = '<tr><td colspan="3">Error</td></tr>';
         console.error(err);
       }
+    }
+
+    // Generar PIN aleatorio único
+    function generarPINUnico() {
+      const pinInput = document.getElementById('nuevo-pin');
+      const pinesExistentes = new Set();
+      if (window.listaTrabajadores) {
+        Object.values(window.listaTrabajadores).forEach(t => {
+          pinesExistentes.add(t.pin);
+        });
+      }
+
+      let intentos = 0;
+      const maxIntentos = 100;
+      let pin;
+      do {
+        pin = Math.floor(1000 + Math.random() * 9000).toString();
+        intentos++;
+      } while (pinesExistentes.has(pin) && intentos < maxIntentos);
+
+      if (intentos >= maxIntentos) {
+        alert("⚠️ No se pudo generar un PIN único.");
+        return;
+      }
+
+      pinInput.value = pin;
+      document.getElementById('msg-trabajadores').textContent = `✅ PIN generado: ${pin}`;
+      document.getElementById('msg-trabajadores').className = 'success';
     }
 
     async function agregarTrabajador() {
@@ -388,7 +504,11 @@
       }
 
       try {
-        await db.collection('trabajadores').add({ pin, nombre });
+        await db.collection('trabajadores').add({ 
+          pin, 
+          nombre,
+          fechaRegistro: firebase.firestore.FieldValue.serverTimestamp()
+        });
         msg.textContent = '✅ Trabajador añadido.';
         msg.className = 'success';
         document.getElementById('nuevo-pin').value = '';
@@ -441,6 +561,165 @@
         });
     };
 
+    // --- PIN DE ACCESO ---
+    async function guardarPIN(pin, activo, comentario) {
+      try {
+        await db.collection('pines_acceso').doc(pin).set({
+          pin: pin,
+          activo: activo,
+          comentario: comentario || '',
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        document.getElementById('comentario-pin').value = '';
+        document.getElementById('url-acceso').value = `https://erwoo11.github.io/controlhorario/registro.html?pin=${pin}`;
+        document.getElementById('msg-pin').textContent = '✅ PIN guardado';
+        document.getElementById('msg-pin').className = 'success';
+        
+        cargarPinesAcceso();
+      } catch (err) {
+        console.error("Error al guardar PIN:", err);
+        document.getElementById('msg-pin').textContent = '❌ Error: ' + err.message;
+        document.getElementById('msg-pin').className = 'error';
+      }
+    }
+
+    async function generarPIN() {
+      const pin = Math.floor(1000 + Math.random() * 9000).toString();
+      const comentario = document.getElementById('comentario-pin').value.trim();
+      await guardarPIN(pin, true, comentario);
+    }
+
+    async function cargarPinesAcceso() {
+      try {
+        const snapshot = await db.collection('pines_acceso')
+          .orderBy('timestamp', 'desc')
+          .get();
+        
+        const tbody = document.getElementById('cuerpo-pines');
+        if (snapshot.empty) {
+          tbody.innerHTML = '<tr><td colspan="5">No hay PINs creados</td></tr>';
+          return;
+        }
+        
+        let filas = '';
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const fecha = data.timestamp?.toDate ? 
+            new Intl.DateTimeFormat('es-ES', { 
+              year: '2-digit', month: '2-digit', day: '2-digit',
+              hour: '2-digit', minute: '2-digit'
+            }).format(data.timestamp.toDate()) : 'Sin fecha';
+          
+          filas += `
+            <tr>
+              <td><strong>${data.pin}</strong></td>
+              <td>${fecha}</td>
+              <td>${data.comentario || '-'}</td>
+              <td>
+                <label style="display: flex; align-items: center; gap: 5px;">
+                  <input type="checkbox" 
+                         class="toggle-pin-individual" 
+                         data-pin="${data.pin}" 
+                         ${data.activo ? 'checked' : ''} />
+                  ${data.activo ? '✅ Activo' : '❌ Inactivo'}
+                </label>
+              </td>
+              <td>
+                <button class="btn-usar-pin" data-pin="${data.pin}" data-comentario="${data.comentario || ''}">
+                  Usar
+                </button>
+              </td>
+            </tr>
+          `;
+        });
+        
+        tbody.innerHTML = filas;
+        
+        // Eventos checkboxes individuales
+        document.querySelectorAll('.toggle-pin-individual').forEach(checkbox => {
+          checkbox.addEventListener('change', async (e) => {
+            const pin = e.target.dataset.pin;
+            const activo = e.target.checked;
+            
+            const docRef = db.collection('pines_acceso').doc(pin);
+            const docSnap = await docRef.get();
+            const comentario = docSnap.exists ? docSnap.data().comentario : '';
+            
+            await docRef.update({
+              activo: activo,
+              timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            
+            cargarPinesAcceso();
+          });
+        });
+        
+        // Eventos "Usar"
+        document.querySelectorAll('.btn-usar-pin').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const pin = e.target.dataset.pin;
+            const comentario = e.target.dataset.comentario;
+            document.getElementById('comentario-pin').value = comentario;
+            document.getElementById('url-acceso').value = `https://erwoo11.github.io/controlhorario/registro.html?pin=${pin}`;
+          });
+        });
+        
+      } catch (err) {
+        console.error("Error al cargar PINs:", err);
+        document.getElementById('cuerpo-pines').innerHTML = 
+          '<tr><td colspan="5">Error al cargar</td></tr>';
+      }
+    }
+
+    // Borrar todos los PINs
+    async function borrarTodosPins() {
+      if (!confirm("⚠️ ¿Estás seguro de que quieres BORRAR TODOS los PINs de acceso?")) return;
+      const respuesta = prompt("Escribe 'BORRAR TODO' para confirmar:");
+      if (respuesta !== "BORRAR TODO") {
+        alert("Operación cancelada.");
+        return;
+      }
+
+      try {
+        const snapshot = await db.collection('pines_acceso').get();
+        const batch = db.batch();
+        snapshot.docs.forEach(doc => batch.delete(doc.ref));
+        await batch.commit();
+        
+        document.getElementById('comentario-pin').value = '';
+        document.getElementById('url-acceso').value = '';
+        
+        alert("✅ Todos los PINs han sido eliminados.");
+        cargarPinesAcceso();
+      } catch (err) {
+        console.error("Error al borrar PINs:", err);
+        alert("❌ Error al borrar: " + err.message);
+      }
+    }
+
+    // Generar y copiar URL
+    function generarURLAcceso() {
+      const url = document.getElementById('url-acceso').value;
+      if (!url || !url.includes('?pin=')) {
+        alert("Genera un PIN primero");
+        return;
+      }
+      
+      navigator.clipboard.writeText(url).then(() => {
+        alert("✅ Enlace copiado al portapapeles");
+      }).catch(err => {
+        console.warn("No se pudo copiar:", err);
+        const textArea = document.createElement("textarea");
+        textArea.value = url;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+        alert("✅ Enlace copiado (método alternativo)");
+      });
+    }
+
     // --- PESTAÑAS ---
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -449,7 +728,10 @@
         const tab = btn.dataset.tab;
         document.getElementById('tab-registros').classList.toggle('hidden', tab !== 'registros');
         document.getElementById('tab-trabajadores').classList.toggle('hidden', tab !== 'trabajadores');
+        document.getElementById('tab-pines').classList.toggle('hidden', tab !== 'pines');
+        
         if (tab === 'trabajadores') cargarTrabajadores();
+        if (tab === 'pines') cargarPinesAcceso();
       });
     });
 
@@ -493,6 +775,11 @@
       else alert('No hay datos para exportar.');
     });
     document.getElementById('btn-agregar').addEventListener('click', agregarTrabajador);
+    document.getElementById('btn-generar-pin').addEventListener('click', generarPINUnico);
+    document.getElementById('orden-trabajadores').addEventListener('change', cargarTrabajadores);
+    document.getElementById('generar-pin').addEventListener('click', generarPIN);
+    document.getElementById('borrar-todos-pins').addEventListener('click', borrarTodosPins);
+    document.getElementById('generar-url').addEventListener('click', generarURLAcceso);
 
     // Fallback para logo
     document.getElementById('logo').onerror = function() {

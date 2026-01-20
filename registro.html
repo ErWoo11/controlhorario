@@ -157,6 +157,41 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
   <script>
+    // Verificar PIN de acceso
+    async function verificarPINAcceso() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const pinParam = urlParams.get('pin');
+      
+      if (!pinParam) {
+        mostrarErrorAcceso();
+        return false;
+      }
+
+      try {
+        const doc = await db.collection('pines_acceso').doc(pinParam).get();
+        if (!doc.exists || !doc.data().activo) {
+          mostrarErrorAcceso();
+          return false;
+        }
+        
+        return true;
+      } catch (err) {
+        console.error("Error verificando PIN:", err);
+        mostrarErrorAcceso();
+        return false;
+      }
+    }
+
+    function mostrarErrorAcceso() {
+      document.body.innerHTML = `
+        <div style="text-align:center; padding:50px; font-family:Arial; background:#f8d7da; color:#721c24;">
+          <h2>❌ Acceso no autorizado</h2>
+          <p>Este sistema solo funciona desde el puesto de trabajo.</p>
+          <p>Escanea el código QR oficial.</p>
+        </div>
+      `;
+    }
+
     const firebaseConfig = {
       apiKey: "AIzaSyACVAm_3qDdghFNixYIYF6ToYOf_dIVodE",
       authDomain: "control-horario-obra.firebaseapp.com",
@@ -318,6 +353,12 @@
 
         actualizarEstadoBotones();
         mostrarMensaje(`✅ ${tipo === 'entrada' ? 'Entrada' : 'Salida'} registrada para ${TRABAJADORES[pin]}`, 'success');
+        
+        // ✅ Redirección automática tras 3 segundos
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 3000);
+
         pinInput.value = '';
       } catch (err) {
         console.error("Error al registrar:", err);
@@ -333,10 +374,15 @@
       setTimeout(actualizarEstadoBotones, 100);
     });
 
-    cargarTrabajadores();
-    setInterval(() => {
-      actualizarEstadoBotones();
-    }, 60000);
+    // Verificar PIN antes de cargar
+    verificarPINAcceso().then(permitido => {
+      if (permitido) {
+        cargarTrabajadores();
+        setInterval(() => {
+          actualizarEstadoBotones();
+        }, 60000);
+      }
+    });
 
     document.getElementById('entrada').addEventListener('click', () => registrar('entrada'));
     document.getElementById('salida').addEventListener('click', () => registrar('salida'));
