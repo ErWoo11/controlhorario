@@ -353,7 +353,7 @@
           }
         }
 
-        // ✅ ACTUALIZAR ESTADÍSTICAS SIN MERGE
+        // ✅ ACTUALIZAR ESTADÍSTICAS (SIMPLIFICADO)
         if (pinFromUrl) {
           const statsRef = db.collection('estadisticas_pins').doc(pinFromUrl);
           
@@ -378,19 +378,19 @@
             ciclosCompletos++; // Cada salida válida = 1 ciclo
           }
           
-          // Guardar datos SIN merge (reemplazar todo el documento)
+          // Guardar datos (reemplazar todo el documento)
           await statsRef.set({
             ciclosCompletos: ciclosCompletos,
             totalEntradas: totalEntradas,
             totalSalidas: totalSalidas,
             ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
-          }); // ← ¡SIN { merge: true }!
+          });
         }
 
         actualizarEstadoBotones();
         mostrarMensaje(`✅ ${tipo === 'entrada' ? 'Entrada' : 'Salida'} registrada para ${TRABAJADORES[pin]}`, 'success');
         
-        // Redirección
+        // Redirección automática
         setTimeout(() => {
           window.location.href = 'index.html';
         }, 3000);
@@ -410,7 +410,7 @@
       setTimeout(actualizarEstadoBotones, 100);
     });
 
-    // Verificar PIN antes de cargar
+    // Inicializar
     verificarPINAcceso().then(permitido => {
       if (permitido) {
         cargarTrabajadores();
