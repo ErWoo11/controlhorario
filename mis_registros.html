@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mis Registros Horarios</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: url('fondo.png') repeat;
+      background-size: 300px;
+      background-color: #f9f9f9;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    .main-content {
+      max-width: 500px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    /* Logo */
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .logo {
+      width: 100%;
+      max-width: 300 px;
+      height: auto;
+      border-radius: 16px;
+      box-shadow: 0 6px 25px rgba(0,0,0,0.15);
+      margin: 0 auto 40px;
+      display: block;
+    }
+
+    #logo.fallback {
+      background: #2c3e50;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      font-weight: bold;
+      border-radius: 16px;
+      box-shadow: 0 6px 25px rgba(0,0,0,0.15);
+      margin: 0 auto 40px;
+    }
+
+    /* Efecto al pasar el ratón */
+    .logo:hover {
+      transform: scale(1.03) translateY(-5px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+
+    .container {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      color: #2c3e50;
+      margin-bottom: 20px;
+    }
+
+    input, button {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+
+    button {
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
+
+    th {
+      background: #f2f2f2;
+    }
+
+    #mensaje {
+      margin-top: 10px;
+      padding: 8px;
+      border-radius: 4px;
+    }
+
+    .success { background: #d4edda; color: #155724; }
+    .error { background: #f8d7da; color: #721c24; }
+
+    #registros-container {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="main-content">
+
+  <!-- Logo (clic para volver a inicio) -->
+   <div class="header">
+    <a href="index.html">
+     <img src="logo.png" alt="Logo de la Empresa" class="logo" id="logo">
+    </a>
+   </div>
+
+    <div class="container">
+      <h1>📋 Mis Registros Horarios</h1>
+      <p>Introduce tu PIN para acceder a tus últimos 20 registros.</p>
+      
+      <div id="formulario">
+        <input type="number" id="pin-usuario" placeholder="Introduce tu PIN (4 dígitos)" min="1000" max="9999" />
+        <button id="ver-registros">🔍 Ver mis registros</button>
+        <div id="mensaje"></div>
+      </div>
+
+      <div id="registros-container" style="display: none;">
+        <h3>Tus últimos 20 registros</h3>
+        <table id="tabla-registros">
+          <thead>
+            <tr>
+              <th>Tipo</th>
+              <th>Fecha y Hora</th>
+            </tr>
+          </thead>
+          <tbody id="cuerpo-registros"></tbody>
+        </table>
+        <button id="volver" style="margin-top: 15px; background: #e74c3c;">⬅️ Volver</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyACVAm_3qDdghFNixYIYF6ToYOf_dIVodE",
+      authDomain: "control-horario-obra.firebaseapp.com",
+      projectId: "control-horario-obra",
+      storageBucket: "control-horario-obra.firebasestorage.app",
+      messagingSenderId: "566402636945",
+      appId: "1:566402636945:web:7a8fa39c373ae62a49b330"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    let TRABAJADORES = {};
+
+    // Cargar lista de trabajadores
+    async function cargarTrabajadores() {
+      try {
+        const snapshot = await db.collection('trabajadores').get();
+        const mapa = {};
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          if (data.pin && data.nombre) {
+            mapa[data.pin] = data.nombre;
+          }
+        });
+        TRABAJADORES = mapa;
+      } catch (err) {
+        console.error("Error al cargar trabajadores:", err);
+      }
+    }
+
+    // Formatear fecha
+    function formatearFecha(fecha) {
+      if (fecha?.toDate) fecha = fecha.toDate();
+      return new Intl.DateTimeFormat('es-ES', {
+        year: '2-digit',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      }).format(fecha);
+    }
+
+    // Mostrar mensaje
+    function mostrarMensaje(texto, tipo = 'success') {
+      const msg = document.getElementById('mensaje');
+      msg.textContent = texto;
+      msg.className = tipo;
+    }
+
+    // Cargar registros del usuario
+    async function cargarRegistrosUsuario(pin) {
+      if (!TRABAJADORES[pin]) {
+        mostrarMensaje('⚠️ PIN no válido', 'error');
+        return;
+      }
+
+      try {
+        const snapshot = await db.collection('registros_publicos')
+          .where('trabajadorId', '==', pin)
+          .orderBy('fechaHora', 'desc')
+          .limit(20)
+          .get();
+
+        const tbody = document.getElementById('cuerpo-registros');
+        if (snapshot.empty) {
+          tbody.innerHTML = '<tr><td colspan="2">No hay registros disponibles</td></tr>';
+        } else {
+          const filas = [];
+          snapshot.forEach(doc => {
+            const r = doc.data();
+            filas.push(`<tr><td>${r.tipo}</td><td>${formatearFecha(r.fechaHora)}</td></tr>`);
+          });
+          tbody.innerHTML = filas.join('');
+        }
+
+        // Mostrar contenedor de registros
+        document.getElementById('registros-container').style.display = 'block';
+        document.getElementById('formulario').style.display = 'none';
+        
+      } catch (err) {
+        console.error("Error al cargar registros:", err);
+        mostrarMensaje('❌ Error al cargar registros', 'error');
+      }
+    }
+
+    // Eventos
+    document.getElementById('ver-registros').addEventListener('click', () => {
+      const pinInput = document.getElementById('pin-usuario');
+      const pin = pinInput.value.trim();
+      
+      if (!pin || pin.length !== 4 || isNaN(pin)) {
+        mostrarMensaje('⚠️ Introduce un PIN válido de 4 dígitos', 'error');
+        return;
+      }
+      
+      cargarRegistrosUsuario(pin);
+    });
+
+    document.getElementById('volver').addEventListener('click', () => {
+      document.getElementById('registros-container').style.display = 'none';
+      document.getElementById('formulario').style.display = 'block';
+      document.getElementById('pin-usuario').value = '';
+      document.getElementById('mensaje').textContent = '';
+    });
+
+    // Inicializar
+    cargarTrabajadores();
+
+    // Fallback para logo
+    document.getElementById('logo').onerror = function() {
+      this.classList.add('fallback');
+      this.textContent = 'LC';
+    };
+  </script>
+</body>
+</html>

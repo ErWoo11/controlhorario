@@ -56,6 +56,13 @@
       margin: 0 auto 40px;
     }
 
+    /* Efecto al pasar el ratón */
+    .logo:hover {
+      transform: scale(1.03) translateY(-5px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+
     /* Contenido con fondo blanco */
     .container {
       background: rgba(255, 255, 255, 0.95);
@@ -98,13 +105,17 @@
 <body>
   <!-- Logo centrado -->
   <div class="main-content">
-    <div class="header">
-      <img src="logo.png" alt="Logo de la Empresa" class="logo" id="logo">
-    </div>
+
+  <!-- Logo (clic para volver a inicio) -->
+   <div class="header">
+    <a href="index.html">
+     <img src="logo.png" alt="Logo de la Empresa" class="logo" id="logo">
+    </a>
+   </div>
 
     <!-- Contenido con fondo blanco -->
     <div class="container">
-      <h2>Descargar tu Nómina</h2>
+      <h2>📄 Descargar tu Nómina</h2>
       <p>Introduce tu PIN para acceder a tu última nómina.</p>
       
       <input type="number" id="pin" placeholder="Tu PIN (4 dígitos)" min="1000" max="9999" />
