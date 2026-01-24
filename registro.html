@@ -157,13 +157,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
   <script>
-    // DEBUG: Verificar URL y parámetros inmediatamente
-    console.log("🔍 [INICIO] URL actual:", window.location.href);
-    const urlParams = new URLSearchParams(window.location.search);
-    const pinFromUrl = urlParams.get('pin');
-    console.log("🔍 [INICIO] Parámetros:", Object.fromEntries(urlParams));
-    console.log("🔍 [INICIO] PIN de acceso:", pinFromUrl);
-
     const firebaseConfig = {
       apiKey: "AIzaSyACVAm_3qDdghFNixYIYF6ToYOf_dIVodE",
       authDomain: "control-horario-obra.firebaseapp.com",
@@ -176,52 +169,26 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // ✅ PRUEBA DIRECTA DE ESCRITURA
-    if (pinFromUrl) {
-      console.log("📝 [PRUEBA] Intentando escritura directa en estadisticas_pins/" + pinFromUrl);
-      db.collection('estadisticas_pins').doc(pinFromUrl).set({
-        prueba_directa: true,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-      }).then(() => {
-        console.log("✅ [PRUEBA] ¡Escritura directa exitosa!");
-      }).catch(err => {
-        console.error("❌ [PRUEBA] Error en escritura directa:", err);
-      });
-    }
+    // Obtener PIN de la URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const pinFromUrl = urlParams.get('pin');
 
     // Verificar PIN de acceso
     async function verificarPINAcceso() {
-      console.log("🔍 [VERIFICACIÓN] Iniciando verificación de PIN de acceso");
-      
       if (!pinFromUrl) {
-        console.warn("⚠️ [VERIFICACIÓN] No se encontró PIN en la URL");
         mostrarErrorAcceso();
         return false;
       }
 
       try {
-        console.log("🔍 [VERIFICACIÓN] Buscando documento pines_acceso/" + pinFromUrl);
         const doc = await db.collection('pines_acceso').doc(pinFromUrl).get();
-        
-        if (!doc.exists) {
-          console.warn("⚠️ [VERIFICACIÓN] Documento pines_acceso/" + pinFromUrl + " no existe");
+        if (!doc.exists || !doc.data().activo) {
           mostrarErrorAcceso();
           return false;
         }
-        
-        const data = doc.data();
-        console.log("🔍 [VERIFICACIÓN] Datos del PIN:", data);
-        
-        if (!data.activo) {
-          console.warn("⚠️ [VERIFICACIÓN] PIN no está activo");
-          mostrarErrorAcceso();
-          return false;
-        }
-        
-        console.log("✅ [VERIFICACIÓN] PIN válido y activo");
         return true;
       } catch (err) {
-        console.error("❌ [VERIFICACIÓN] Error al verificar PIN:", err);
+        console.error("Error verificando PIN:", err);
         mostrarErrorAcceso();
         return false;
       }
@@ -247,10 +214,8 @@
 
     async function cargarTrabajadores() {
       try {
-        console.log("📥 [CARGA] Cargando lista de trabajadores...");
         const snapshot = await db.collection('trabajadores').get();
         if (snapshot.empty) {
-          console.warn("⚠️ [CARGA] No hay trabajadores registrados");
           document.getElementById('cargando').textContent = '⚠️ No hay trabajadores registrados.';
           return;
         }
@@ -262,30 +227,23 @@
           }
         });
         TRABAJADORES = mapa;
-        console.log("✅ [CARGA] Trabajadores cargados:", Object.keys(TRABAJADORES).length);
         document.getElementById('cargando').style.display = 'none';
         document.getElementById('formulario').style.display = 'block';
         actualizarEstadoBotones();
       } catch (err) {
-        console.error("❌ [CARGA] Error al cargar trabajadores:", err);
+        console.error("Error al cargar trabajadores:", err);
         document.getElementById('cargando').textContent = '❌ Error al cargar. Revisa conexión.';
       }
     }
 
     async function obtenerUltimoTipo(pin) {
-      console.log("🔍 [ÚLTIMO TIPO] Buscando último registro para PIN:", pin);
       const snapshot = await db.collection('registros_publicos')
         .where('trabajadorId', '==', pin)
         .orderBy('fechaHora', 'desc')
         .limit(1)
         .get();
-      if (snapshot.empty) {
-        console.log("ℹ️ [ÚLTIMO TIPO] No hay registros previos para PIN:", pin);
-        return null;
-      }
-      const tipo = snapshot.docs[0].data().tipo;
-      console.log("✅ [ÚLTIMO TIPO] Último tipo para PIN", pin, ":", tipo);
-      return tipo;
+      if (snapshot.empty) return null;
+      return snapshot.docs[0].data().tipo;
     }
 
     function getEstadoDispositivo() {
@@ -331,21 +289,15 @@
     }
 
     async function registrar(tipo) {
-      console.log("\n🚀 [REGISTRO] === INICIANDO REGISTRO ===");
-      console.log("📝 [REGISTRO] Tipo de registro:", tipo);
-      
       const pinInput = document.getElementById('pin');
       const pin = pinInput.value.trim();
-      console.log("📝 [REGISTRO] PIN del trabajador:", pin);
 
       if (!pin || !TRABAJADORES[pin]) {
-        console.warn("⚠️ [REGISTRO] PIN no válido");
         mostrarMensaje('⚠️ PIN no válido', 'error');
         return;
       }
 
       try {
-        console.log("🔍 [REGISTRO] Verificando estado del dispositivo...");
         const estado = getEstadoDispositivo();
         const ahora = Date.now();
         const unaHoraMs = 60 * 60 * 1000;
@@ -353,7 +305,6 @@
         if (tipo === 'entrada') {
           if (estado.pinEntrada && (ahora - estado.timestamp) < unaHoraMs) {
             const minutosRestantes = Math.ceil((unaHoraMs - (ahora - estado.timestamp)) / 60000);
-            console.warn("⚠️ [REGISTRO] Entrada bloqueada por tiempo");
             mostrarMensaje(`❌ Tienes una entrada abierta (PIN ${estado.pinEntrada}). Espera ${minutosRestantes} minuto(s).`, 'error');
             return;
           }
@@ -362,15 +313,12 @@
         if (tipo === 'salida') {
           if (estado.pinEntrada && (ahora - estado.timestamp) < unaHoraMs) {
             if (pin !== estado.pinEntrada) {
-              console.warn("⚠️ [REGISTRO] Salida bloqueada: PIN no coincide con entrada activa");
               mostrarMensaje(`❌ Solo puedes registrar SALIDA para el PIN ${estado.pinEntrada} (entrada activa).`, 'error');
               return;
             }
           } else {
-            console.log("🔍 [REGISTRO] Verificando última entrada para salida...");
             const ultimoTipo = await obtenerUltimoTipo(pin);
             if (ultimoTipo !== 'entrada') {
-              console.warn("⚠️ [REGISTRO] No hay entrada previa para salida");
               mostrarMensaje('❌ No hay una entrada previa para este PIN.', 'error');
               return;
             }
@@ -378,46 +326,38 @@
         }
 
         if (tipo === 'entrada') {
-          console.log("🔍 [REGISTRO] Verificando entradas pendientes...");
           const ultimoTipo = await obtenerUltimoTipo(pin);
           if (ultimoTipo === 'entrada') {
-            console.warn("⚠️ [REGISTRO] Ya existe entrada sin salida");
             mostrarMensaje('❌ Ya existe una entrada sin salida. Contacta al administrador.', 'error');
             return;
           }
         }
 
         // Guardar registro
-        console.log("💾 [REGISTRO] Guardando en registros_publicos...");
         await db.collection('registros_publicos').add({
           trabajadorId: pin,
           nombre: TRABAJADORES[pin],
           tipo: tipo,
           fechaHora: firebase.firestore.FieldValue.serverTimestamp()
         });
-        console.log("✅ [REGISTRO] Registro guardado exitosamente");
 
         // Actualizar estado local
         if (tipo === 'entrada') {
-          console.log("🔄 [REGISTRO] Actualizando estado local: entrada");
           setEstadoDispositivo({
             pinEntrada: pin,
             timestamp: Date.now()
           });
         } else if (tipo === 'salida') {
           if (estado.pinEntrada === pin) {
-            console.log("🔄 [REGISTRO] Limpiando estado local: salida");
             limpiarBloqueo();
           }
         }
 
-        // ✅ ACTUALIZAR ESTADÍSTICAS
+        // ✅ ACTUALIZAR ESTADÍSTICAS SIN MERGE
         if (pinFromUrl) {
-          console.log("📊 [ESTADÍSTICAS] Actualizando estadísticas para PIN:", pinFromUrl);
           const statsRef = db.collection('estadisticas_pins').doc(pinFromUrl);
           
           // Leer datos actuales
-          console.log("📊 [ESTADÍSTICAS] Leyendo datos existentes...");
           const statsSnap = await statsRef.get();
           let ciclosCompletos = 0;
           let totalEntradas = 0;
@@ -425,34 +365,26 @@
           
           if (statsSnap.exists) {
             const data = statsSnap.data();
-            console.log("📊 [ESTADÍSTICAS] Datos existentes:", data);
             ciclosCompletos = data.ciclosCompletos || 0;
             totalEntradas = data.totalEntradas || 0;
             totalSalidas = data.totalSalidas || 0;
-          } else {
-            console.log("📊 [ESTADÍSTICAS] No hay datos existentes, creando nuevos");
           }
           
           // Actualizar contadores
           if (tipo === 'entrada') {
             totalEntradas++;
-            console.log("📈 [ESTADÍSTICAS] Incrementando entradas:", totalEntradas);
           } else if (tipo === 'salida') {
             totalSalidas++;
-            ciclosCompletos++;
-            console.log("📈 [ESTADÍSTICAS] Incrementando salidas:", totalSalidas, "ciclos:", ciclosCompletos);
+            ciclosCompletos++; // Cada salida válida = 1 ciclo
           }
           
-          // Guardar datos
-          console.log("💾 [ESTADÍSTICAS] Guardando actualización...");
+          // Guardar datos SIN merge (reemplazar todo el documento)
           await statsRef.set({
             ciclosCompletos: ciclosCompletos,
             totalEntradas: totalEntradas,
             totalSalidas: totalSalidas,
             ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
-          }, { merge: true });
-          
-          console.log("✅ [ESTADÍSTICAS] Estadísticas actualizadas exitosamente");
+          }); // ← ¡SIN { merge: true }!
         }
 
         actualizarEstadoBotones();
@@ -460,15 +392,12 @@
         
         // Redirección
         setTimeout(() => {
-          console.log("🔄 [REGISTRO] Redirigiendo a index.html...");
           window.location.href = 'index.html';
         }, 3000);
 
         pinInput.value = '';
-        console.log("✅ [REGISTRO] === REGISTRO COMPLETADO ===\n");
-        
       } catch (err) {
-        console.error("❌ [REGISTRO] ERROR CRÍTICO AL REGISTRAR:", err);
+        console.error("Error al registrar:", err);
         if (err.code === 'failed-precondition') {
           mostrarMensaje('❌ Error: falta índice en Firestore.', 'error');
         } else {
