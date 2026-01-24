@@ -125,15 +125,6 @@
   </style>
 </head>
 <body>
-
-<!-- Añade esto justo después de <body> -->
-<script>
-  // DEBUG: Verificar URL y parámetros inmediatamente
-  console.log("🔍 URL actual:", window.location.href);
-  console.log("🔍 Parámetros:", Object.fromEntries(new URLSearchParams(window.location.search)));
-  console.log("🔍 PIN de acceso:", new URLSearchParams(window.location.search).get('pin'));
-</script>
-
   <div class="main-content">
     <!-- Logo -->
     <div class="header">
@@ -166,9 +157,39 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
   <script>
+    // DEBUG: Verificar URL y parámetros inmediatamente
+    console.log("🔍 URL actual:", window.location.href);
+    console.log("🔍 Parámetros:", Object.fromEntries(new URLSearchParams(window.location.search)));
+    console.log("🔍 PIN de acceso:", new URLSearchParams(window.location.search).get('pin'));
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyACVAm_3qDdghFNixYIYF6ToYOf_dIVodE",
+      authDomain: "control-horario-obra.firebaseapp.com",
+      projectId: "control-horario-obra",
+      storageBucket: "control-horario-obra.firebasestorage.app",
+      messagingSenderId: "566402636945",
+      appId: "1:566402636945:web:7a8fa39c373ae62a49b330"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // ✅ PRUEBA DIRECTA DE ESCRITURA CON EL PIN DE LA URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const pinFromUrl = urlParams.get('pin');
+    if (pinFromUrl) {
+      db.collection('estadisticas_pins').doc(pinFromUrl).set({
+        prueba_directa: true,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      }).then(() => {
+        console.log("✅ ¡Escritura directa exitosa con PIN:", pinFromUrl, "!");
+      }).catch(err => {
+        console.error("❌ Error en escritura directa:", err);
+      });
+    }
+
     // Verificar PIN de acceso
     async function verificarPINAcceso() {
-      const urlParams = new URLSearchParams(window.location.search);
       const pinParam = urlParams.get('pin');
       
       if (!pinParam) {
@@ -200,18 +221,6 @@
         </div>
       `;
     }
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyACVAm_3qDdghFNixYIYF6ToYOf_dIVodE",
-      authDomain: "control-horario-obra.firebaseapp.com",
-      projectId: "control-horario-obra",
-      storageBucket: "control-horario-obra.firebasestorage.app",
-      messagingSenderId: "566402636945",
-      appId: "1:566402636945:web:7a8fa39c373ae62a49b330"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
 
     let TRABAJADORES = {};
 
@@ -306,8 +315,6 @@
         return;
       }
 
-      let registroExitoso = false;
-
       try {
         const estado = getEstadoDispositivo();
         const ahora = Date.now();
@@ -364,10 +371,51 @@
           }
         }
 
-        registroExitoso = true;
+        // ✅ ACTUALIZAR ESTADÍSTICAS
+        if (pinFromUrl) {
+          const statsRef = db.collection('estadisticas_pins').doc(pinFromUrl);
+          
+          // Leer datos actuales
+          const statsSnap = await statsRef.get();
+          let ciclosCompletos = 0;
+          let totalEntradas = 0;
+          let totalSalidas = 0;
+          
+          if (statsSnap.exists) {
+            const data = statsSnap.data();
+            ciclosCompletos = data.ciclosCompletos || 0;
+            totalEntradas = data.totalEntradas || 0;
+            totalSalidas = data.totalSalidas || 0;
+          }
+          
+          // Actualizar contadores
+          if (tipo === 'entrada') {
+            totalEntradas++;
+          } else if (tipo === 'salida') {
+            totalSalidas++;
+            ciclosCompletos++; // Cada salida válida = 1 ciclo
+          }
+          
+          // Guardar datos
+          await statsRef.set({
+            ciclosCompletos: ciclosCompletos,
+            totalEntradas: totalEntradas,
+            totalSalidas: totalSalidas,
+            ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
+          }, { merge: true });
+          
+          console.log("✅ Estadísticas actualizadas para PIN:", pinFromUrl);
+        }
+
         actualizarEstadoBotones();
         mostrarMensaje(`✅ ${tipo === 'entrada' ? 'Entrada' : 'Salida'} registrada para ${TRABAJADORES[pin]}`, 'success');
+        
+        // Redirección
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 3000);
 
+        pinInput.value = '';
       } catch (err) {
         console.error("Error al registrar:", err);
         if (err.code === 'failed-precondition') {
@@ -375,62 +423,6 @@
         } else {
           mostrarMensaje('❌ Error: ' + (err.message || 'conexión'), 'error');
         }
-        return;
-      }
-
-      // ✅ ESTADÍSTICAS SIEMPRE SE EJECUTAN DESPUÉS DE UN REGISTRO EXITOSO
-      if (registroExitoso) {
-        try {
-          const urlParams = new URLSearchParams(window.location.search);
-          const pinAcceso = urlParams.get('pin');
-          
-          if (pinAcceso) {
-            const pinStr = String(pinAcceso).trim();
-            if (pinStr.length === 4 && /^\d{4}$/.test(pinStr)) {
-              const statsRef = db.collection('estadisticas_pins').doc(pinStr);
-              
-              // Leer datos actuales
-              const statsSnap = await statsRef.get();
-              let ciclosCompletos = 0;
-              let totalEntradas = 0;
-              let totalSalidas = 0;
-              
-              if (statsSnap.exists) {
-                const data = statsSnap.data();
-                ciclosCompletos = data.ciclosCompletos || 0;
-                totalEntradas = data.totalEntradas || 0;
-                totalSalidas = data.totalSalidas || 0;
-              }
-              
-              // Actualizar contadores
-              if (tipo === 'entrada') {
-                totalEntradas++;
-              } else if (tipo === 'salida') {
-                totalSalidas++;
-                ciclosCompletos++; // Cada salida válida = 1 ciclo
-              }
-              
-              // Guardar datos
-              await statsRef.set({
-                ciclosCompletos: ciclosCompletos,
-                totalEntradas: totalEntradas,
-                totalSalidas: totalSalidas,
-                ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
-              }, { merge: true });
-              
-              console.log("✅ Estadísticas actualizadas para PIN:", pinStr);
-            }
-          }
-        } catch (statsErr) {
-          console.error("❌ Error en estadísticas:", statsErr);
-        }
-
-        // Redirección
-        setTimeout(() => {
-          window.location.href = 'index.html';
-        }, 3000);
-
-        pinInput.value = '';
       }
     }
 
