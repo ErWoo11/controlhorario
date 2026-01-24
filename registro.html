@@ -13,7 +13,7 @@
 
     body {
       font-family: Arial, sans-serif;
-      background: url('fondo.png') repeat;
+      background: url('fondo-herramientas.png') repeat;
       background-size: 300px;
       background-color: #f9f9f9;
       padding: 20px;
@@ -152,7 +152,7 @@
     </div>
   </div>
 
-  <!-- Firebase SDK -->
+  <!-- Firebase SDK (CORREGIDO: sin espacios en URLs) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
@@ -203,6 +203,25 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+
+    // ✅ PRUEBA DE ESCRITURA (después de inicializar Firebase)
+    function probarEscritura() {
+      try {
+        db.collection('estadisticas_pins').doc('test9999').set({
+          prueba: true,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(() => {
+          console.log("✅ Prueba de escritura exitosa");
+        }).catch(err => {
+          console.error("❌ Prueba de escritura fallida:", err);
+        });
+      } catch (err) {
+        console.error("❌ Error en prueba de escritura:", err);
+      }
+    }
+
+    // Ejecutar prueba de escritura
+    probarEscritura();
 
     let TRABAJADORES = {};
 
@@ -333,6 +352,7 @@
           }
         }
 
+        // Guardar registro
         await db.collection('registros_publicos').add({
           trabajadorId: pin,
           nombre: TRABAJADORES[pin],
@@ -340,6 +360,7 @@
           fechaHora: firebase.firestore.FieldValue.serverTimestamp()
         });
 
+        // Actualizar estado local
         if (tipo === 'entrada') {
           setEstadoDispositivo({
             pinEntrada: pin,
@@ -351,12 +372,69 @@
           }
         }
 
+        // ✅ ACTUALIZACIÓN DE ESTADÍSTICAS CON MANEJO DE ERRORES MEJORADO
+        try {
+          // Obtener PIN de acceso desde URL
+          const urlParams = new URLSearchParams(window.location.search);
+          const pinAcceso = urlParams.get('pin');
+          
+          if (!pinAcceso) {
+            console.warn("⚠️ No se encontró PIN de acceso en la URL");
+            return;
+          }
+          
+          // Asegurar que sea string y válido
+          const pinStr = String(pinAcceso).trim();
+          if (pinStr.length !== 4 || !/^\d{4}$/.test(pinStr)) {
+            console.warn("⚠️ PIN de acceso inválido:", pinAcceso);
+            return;
+          }
+          
+          // Referencia al documento
+          const statsRef = db.collection('estadisticas_pins').doc(pinStr);
+          
+          // Leer datos actuales
+          const statsSnap = await statsRef.get();
+          let ciclosCompletos = 0;
+          let totalEntradas = 0;
+          let totalSalidas = 0;
+          
+          if (statsSnap.exists) {
+            const data = statsSnap.data();
+            ciclosCompletos = data.ciclosCompletos || 0;
+            totalEntradas = data.totalEntradas || 0;
+            totalSalidas = data.totalSalidas || 0;
+          }
+          
+          // Actualizar contadores
+          if (tipo === 'entrada') {
+            totalEntradas++;
+          } else if (tipo === 'salida') {
+            totalSalidas++;
+            ciclosCompletos++; // Cada salida válida = 1 ciclo
+          }
+          
+          // Guardar con manejo de errores explícito
+          await statsRef.set({
+            ciclosCompletos: ciclosCompletos,
+            totalEntradas: totalEntradas,
+            totalSalidas: totalSalidas,
+            ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
+          }, { merge: true });
+          
+          console.log("✅ Estadísticas actualizadas para PIN:", pinStr);
+          
+        } catch (statsErr) {
+          console.error("❌ Error al actualizar estadísticas:", statsErr);
+          // No bloqueamos el registro por error en estadísticas
+        }
+
         actualizarEstadoBotones();
         mostrarMensaje(`✅ ${tipo === 'entrada' ? 'Entrada' : 'Salida'} registrada para ${TRABAJADORES[pin]}`, 'success');
         
         // ✅ Redirección automática tras 3 segundos
         setTimeout(() => {
-          window.location.href = 'https://erwoo11.github.io/controlhorario/';
+          window.location.href = 'index.html';
         }, 3000);
 
         pinInput.value = '';
