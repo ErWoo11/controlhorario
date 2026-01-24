@@ -34,7 +34,7 @@
 
     .logo {
       width: 100%;
-      max-width: 300px;
+      max-width: 300 px;
       height: auto;
       border-radius: 16px;
       box-shadow: 0 6px 25px rgba(0,0,0,0.15);
@@ -104,7 +104,7 @@
       background: #f2f2f2;
     }
 
-    #datos, #login, #gestion-trabajadores, #pines-acceso {
+    #datos, #login, #gestion-trabajadores, #pines-acceso, #tab-estadisticas {
       margin-top: 20px;
     }
 
@@ -156,6 +156,12 @@
       background: #e74c3c;
       margin-top: 15px;
     }
+    
+    /* Estilo para campo obligatorio */
+    input.error {
+      border: 2px solid #e74c3c !important;
+      background-color: #fdf2f2;
+    }
   </style>
 </head>
 <body>
@@ -187,6 +193,7 @@
           <button class="tab-btn active" data-tab="registros">Registros</button>
           <button class="tab-btn" data-tab="trabajadores">Gestión de Trabajadores</button>
           <button class="tab-btn" data-tab="pines">PINs de acceso</button>
+          <button class="tab-btn" data-tab="estadisticas">📊 Estadísticas</button>
         </div>
 
         <!-- Registros -->
@@ -228,7 +235,7 @@
           
           <button id="generar-pin" style="margin-bottom: 15px;">🔄 Generar nuevo PIN</button>
           
-          <input type="text" id="comentario-pin" placeholder="Comentario opcional (ej: Obra Norte)" style="margin-bottom: 15px;" />
+          <input type="text" id="comentario-pin" placeholder="Comentario obligatorio (ej: Obra Norte)" style="margin-bottom: 15px;" />
           <div id="msg-pin"></div>
           
           <!-- Generador de URL -->
@@ -257,6 +264,19 @@
           <button id="borrar-todos-pins" class="btn-borrar-todo" style="margin-top: 15px;">
             🗑️ Borrar todos los PINs
           </button>
+        </div>
+
+        <!-- Estadísticas -->
+        <div id="tab-estadisticas" class="hidden">
+          <h3>📊 Estadísticas por PIN</h3>
+          
+          <button id="cargar-contadores" style="margin-bottom: 15px; background: #3498db; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer;">
+            🔄 Cargar contadores
+          </button>
+          
+          <div id="contenedores-estadisticas">
+            <p>Presiona "Cargar contadores" para ver las estadísticas.</p>
+          </div>
         </div>
       </div>
     </div>
@@ -584,9 +604,22 @@
       }
     }
 
+    // ✅ GENERAR PIN CON COMENTARIO OBLIGATORIO
     async function generarPIN() {
+      const comentarioInput = document.getElementById('comentario-pin');
+      const comentario = comentarioInput.value.trim();
+      
+      // Quitar clase de error si existía
+      comentarioInput.classList.remove('error');
+      
+      if (!comentario) {
+        comentarioInput.classList.add('error');
+        alert("⚠️ El comentario es obligatorio. Por ejemplo: 'Obra Norte', 'Turno mañana', etc.");
+        comentarioInput.focus();
+        return;
+      }
+      
       const pin = Math.floor(1000 + Math.random() * 9000).toString();
-      const comentario = document.getElementById('comentario-pin').value.trim();
       await guardarPIN(pin, true, comentario);
     }
 
@@ -672,9 +705,9 @@
       }
     }
 
-    // Borrar todos los PINs
+    // Borrar todos los PINs y sus estadísticas
     async function borrarTodosPins() {
-      if (!confirm("⚠️ ¿Estás seguro de que quieres BORRAR TODOS los PINs de acceso?")) return;
+      if (!confirm("⚠️ ¿Estás seguro de que quieres BORRAR TODOS los PINs de acceso y sus estadísticas?")) return;
       const respuesta = prompt("Escribe 'BORRAR TODO' para confirmar:");
       if (respuesta !== "BORRAR TODO") {
         alert("Operación cancelada.");
@@ -682,18 +715,31 @@
       }
 
       try {
-        const snapshot = await db.collection('pines_acceso').get();
-        const batch = db.batch();
-        snapshot.docs.forEach(doc => batch.delete(doc.ref));
-        await batch.commit();
+        // Obtener todos los PINs de acceso
+        const pinesSnapshot = await db.collection('pines_acceso').get();
         
+        // Crear batch para borrar PINs de acceso
+        const batchPines = db.batch();
+        pinesSnapshot.docs.forEach(doc => batchPines.delete(doc.ref));
+        await batchPines.commit();
+
+        // Crear batch para borrar estadísticas
+        const batchStats = db.batch();
+        pinesSnapshot.docs.forEach(doc => {
+          const pin = doc.data().pin;
+          if (pin) {
+            batchStats.delete(db.collection('estadisticas_pins').doc(pin));
+          }
+        });
+        await batchStats.commit();
+
         document.getElementById('comentario-pin').value = '';
         document.getElementById('url-acceso').value = '';
         
-        alert("✅ Todos los PINs han sido eliminados.");
+        alert("✅ Todos los PINs y sus estadísticas han sido eliminados.");
         cargarPinesAcceso();
       } catch (err) {
-        console.error("Error al borrar PINs:", err);
+        console.error("Error al borrar PINs y estadísticas:", err);
         alert("❌ Error al borrar: " + err.message);
       }
     }
@@ -720,6 +766,101 @@
       });
     }
 
+    // --- ESTADÍSTICAS ---
+    async function cargarEstadisticas() {
+      try {
+        const pinesSnapshot = await db.collection('pines_acceso').get();
+        const contenedor = document.getElementById('contenedores-estadisticas');
+        
+        if (pinesSnapshot.empty) {
+          contenedor.innerHTML = '<p>No hay PINs creados aún.</p>';
+          return;
+        }
+        
+        let html = '';
+        let hayDatos = false;
+
+        for (const pinDoc of pinesSnapshot.docs) {
+          const pinData = pinDoc.data();
+          const pin = pinData.pin;
+          
+          const statsRef = db.collection('estadisticas_pins').doc(pin);
+          const statsSnap = await statsRef.get();
+          
+          let ciclosCompletos = 0, totalEntradas = 0, totalSalidas = 0;
+          if (statsSnap.exists) {
+            const data = statsSnap.data();
+            ciclosCompletos = data.ciclosCompletos || 0;
+            totalEntradas = data.totalEntradas || 0;
+            totalSalidas = data.totalSalidas || 0;
+            hayDatos = true;
+          }
+          
+          html += `
+            <div style="background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 8px;">
+              <h4>PIN: ${pin} ${pinData.comentario ? `(${pinData.comentario})` : ''}</h4>
+              
+              <!-- Contador global (grande y destacado) -->
+              <div style="text-align: center; margin: 15px 0;">
+                <div style="font-size: 32px; font-weight: bold; color: #2c3e50;">${ciclosCompletos}</div>
+                <div style="color: #7f8c8d;">Personas que han entrado y salido</div>
+              </div>
+              
+              <!-- Contadores secundarios -->
+              <div style="display: flex; justify-content: space-around; margin: 10px 0; background: white; padding: 10px; border-radius: 6px;">
+                <div style="text-align: center;">
+                  <div style="font-size: 18px; color: #2ecc71; font-weight: bold;">${totalEntradas}</div>
+                  <div>Entradas</div>
+                </div>
+                <div style="text-align: center;">
+                  <div style="font-size: 18px; color: #e74c3c; font-weight: bold;">${totalSalidas}</div>
+                  <div>Salidas</div>
+                </div>
+              </div>
+              
+              <button onclick="resetearEstadisticas('${pin}')" 
+                      style="background: #e74c3c; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px;">
+                🗑️ Resetear contadores
+              </button>
+            </div>
+          `;
+        }
+        
+        if (!hayDatos) {
+          contenedor.innerHTML = '<p>No hay registros de estadísticas aún.</p>' + html;
+        } else {
+          contenedor.innerHTML = html;
+        }
+        
+      } catch (err) {
+        console.error("Error al cargar estadísticas:", err);
+        document.getElementById('contenedores-estadisticas').innerHTML = 
+          '<p style="color: #e74c3c;">❌ Error al cargar estadísticas. Revisa la consola.</p>';
+      }
+    }
+
+    // Resetear estadísticas de un PIN
+    async function resetearEstadisticas(pin) {
+      if (!confirm(`¿Resetear todos los contadores del PIN ${pin}?`)) return;
+      
+      try {
+        await db.collection('estadisticas_pins').doc(pin).set({
+          ciclosCompletos: 0,
+          totalEntradas: 0,
+          totalSalidas: 0,
+          ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        alert(`✅ Contadores del PIN ${pin} reseteados.`);
+        cargarEstadisticas();
+      } catch (err) {
+        console.error("Error al resetear:", err);
+        alert("❌ Error al resetear contadores.");
+      }
+    }
+
+    window.resetearEstadisticas = resetearEstadisticas;
+
     // --- PESTAÑAS ---
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -729,9 +870,14 @@
         document.getElementById('tab-registros').classList.toggle('hidden', tab !== 'registros');
         document.getElementById('tab-trabajadores').classList.toggle('hidden', tab !== 'trabajadores');
         document.getElementById('tab-pines').classList.toggle('hidden', tab !== 'pines');
+        document.getElementById('tab-estadisticas').classList.toggle('hidden', tab !== 'estadisticas');
         
         if (tab === 'trabajadores') cargarTrabajadores();
         if (tab === 'pines') cargarPinesAcceso();
+        if (tab === 'estadisticas') {
+          document.getElementById('contenedores-estadisticas').innerHTML = 
+            '<p>Presiona "Cargar contadores" para ver las estadísticas.</p>';
+        }
       });
     });
 
@@ -780,6 +926,7 @@
     document.getElementById('generar-pin').addEventListener('click', generarPIN);
     document.getElementById('borrar-todos-pins').addEventListener('click', borrarTodosPins);
     document.getElementById('generar-url').addEventListener('click', generarURLAcceso);
+    document.getElementById('cargar-contadores').addEventListener('click', cargarEstadisticas);
 
     // Fallback para logo
     document.getElementById('logo').onerror = function() {
