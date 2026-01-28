@@ -97,7 +97,7 @@
     th, td {
       border: 1px solid #ddd;
       padding: 10px;
-      text-align: left;
+      text-align: center; /* ✅ Centrado */
     }
 
     th {
@@ -198,12 +198,13 @@
 
         <!-- Registros -->
         <div id="tab-registros">
+          <h3>📝 Registros</h3>
           <button id="cargar">↻ Cargar registros</button>
           <button id="borrar-registros">🗑️ Borrar todos los registros</button>
           <button id="exportar">📥 Exportar a Excel</button>
           
           <table>
-            <thead><tr><th>Nombre</th><th>Tipo</th><th>Fecha y Hora</th></tr></thead>
+            <thead><tr><th>Nombre</th><th>Tipo</th><th>Fecha y Hora</th><th>Comentario</th></tr></thead>
             <tbody id="tabla-cuerpo"></tbody>
           </table>
         </div>
@@ -326,7 +327,7 @@
       return `${horas}:${minutos.toString().padStart(2, '0')}`;
     }
 
-    // --- EXPORTAR A EXCEL ---
+    // --- EXPORTAR A EXCEL MEJORADO ---
     async function exportarExcel(datos) {
       if (!window.XLSX) {
         const script = document.createElement('script');
@@ -342,20 +343,53 @@
     function exportarConSheetJS(datos) {
       const XLSX = window.XLSX;
       
+      // Hoja 1: Todos los registros
       const registros = datos.map(r => ({
         Nombre: r.nombre,
         Tipo: r.tipo,
-        'Fecha y Hora': formatearFecha(r.fechaHora)
+        'Fecha y Hora': formatearFecha(r.fechaHora),
+        Comentario: r.comentario || '-'
       }));
-      const ws1 = XLSX.utils.json_to_sheet(registros);
       const wb = XLSX.utils.book_new();
+      const ws1 = XLSX.utils.json_to_sheet(registros);
       XLSX.utils.book_append_sheet(wb, ws1, "Registros");
 
+      // Agrupar por obra/comentario
+      const obras = {};
+      datos.forEach(r => {
+        const obra = r.comentario || 'Sin obra';
+        if (!obras[obra]) obras[obra] = [];
+        obras[obra].push({
+          Nombre: r.nombre,
+          Tipo: r.tipo,
+          'Fecha y Hora': formatearFecha(r.fechaHora)
+        });
+      });
+
+      // Crear hojas por obra
+      Object.keys(obras).forEach(obra => {
+        // Limpiar nombre de hoja (máximo 31 caracteres, sin caracteres inválidos)
+        let nombreHoja = obra.substring(0, 31).replace(/[/\\?*[\]:]/g, '_');
+        if (nombreHoja === '') nombreHoja = 'Sin_nombre';
+        
+        // Evitar nombres duplicados
+        let contador = 1;
+        let nombreFinal = nombreHoja;
+        while (wb.SheetNames.includes(nombreFinal)) {
+          nombreFinal = nombreHoja.substring(0, 28) + '_' + contador;
+          contador++;
+        }
+        
+        const wsObra = XLSX.utils.json_to_sheet(obras[obra]);
+        XLSX.utils.book_append_sheet(wb, wsObra, nombreFinal);
+      });
+
+      // Hoja: Cómputo de horas
       const trabajadores = {};
       datos.forEach(r => {
         if (!trabajadores[r.nombre]) trabajadores[r.nombre] = [];
         const fecha = r.fechaHora.toDate ? r.fechaHora.toDate() : new Date(r.fechaHora);
-        trabajadores[r.nombre].push({ tipo: r.tipo, fecha: fecha });
+        trabajadores[r.nombre].push({ tipo: r.tipo, fecha: fecha, comentario: r.comentario || 'Sin obra' });
       });
 
       const computo = [];
@@ -363,27 +397,36 @@
         const eventos = trabajadores[nombre].sort((a, b) => a.fecha - b.fecha);
         let totalMs = 0;
         let ultimaEntrada = null;
+        
         for (const ev of eventos) {
-          if (ev.tipo === 'entrada') ultimaEntrada = ev.fecha;
-          else if (ev.tipo === 'salida' && ultimaEntrada) {
+          if (ev.tipo === 'entrada') {
+            ultimaEntrada = ev.fecha;
+          } else if (ev.tipo === 'salida' && ultimaEntrada) {
             totalMs += ev.fecha - ultimaEntrada;
             ultimaEntrada = null;
           }
         }
+        
         if (totalMs > 0) {
-          computo.push({ Nombre: nombre, 'Horas (HH:MM)': msToHHMM(totalMs) });
+          computo.push({ 
+            Nombre: nombre, 
+            'Horas (HH:MM)': msToHHMM(totalMs),
+            'Obras': [...new Set(trabajadores[nombre].map(e => e.comentario))].join(', ')
+          });
         }
       }
 
       const ws2 = XLSX.utils.json_to_sheet(computo);
       XLSX.utils.book_append_sheet(wb, ws2, "Cómputo horas");
+      
+      // Guardar archivo
       XLSX.writeFile(wb, "registros_horario.xlsx");
     }
 
     // --- REGISTROS ---
     async function cargarRegistros() {
       const cuerpo = document.getElementById('tabla-cuerpo');
-      cuerpo.innerHTML = '<tr><td colspan="3">Cargando...</td></tr>';
+      cuerpo.innerHTML = '<tr><td colspan="4">Cargando...</td></tr>';
       try {
         const snapshot = await db.collection('registros_publicos')
           .orderBy('fechaHora', 'desc')
@@ -395,12 +438,13 @@
         snapshot.forEach(doc => {
           const r = doc.data();
           datos.push(r);
-          filas.push(`<tr><td>${r.nombre}</td><td>${r.tipo}</td><td>${formatearFecha(r.fechaHora)}</td></tr>`);
+          const comentario = r.comentario || '-';
+          filas.push(`<tr><td>${r.nombre}</td><td>${r.tipo}</td><td>${formatearFecha(r.fechaHora)}</td><td>${comentario}</td></tr>`);
         });
         cuerpo.innerHTML = filas.join('');
         window.datosExportar = datos;
       } catch (err) {
-        cuerpo.innerHTML = '<tr><td colspan="3">Error al cargar</td></tr>';
+        cuerpo.innerHTML = '<tr><td colspan="4">Error al cargar</td></tr>';
         console.error(err);
       }
     }
@@ -588,6 +632,7 @@
           pin: pin,
           activo: activo,
           comentario: comentario || '',
+          resetHora: '00:00', // ✅ Por defecto 00:00
           timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
         
@@ -784,6 +829,9 @@
           const pinData = pinDoc.data();
           const pin = pinData.pin;
           
+          // Obtener configuración de reset
+          const resetHora = pinData.resetHora || '00:00'; // Por defecto 00:00
+          
           const statsRef = db.collection('estadisticas_pins').doc(pin);
           const statsSnap = await statsRef.get();
           
@@ -815,6 +863,31 @@
                 <div style="text-align: center;">
                   <div style="font-size: 18px; color: #e74c3c; font-weight: bold;">${totalSalidas}</div>
                   <div>Salidas</div>
+                </div>
+              </div>
+              
+              <!-- ✅ Configuración de reset automático -->
+              <div style="margin: 15px 0; padding: 10px; background: #fff; border-radius: 6px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: bold; color: #2c3e50;">
+                  🕒 Reset automático de contadores:
+                </label>
+                <div style="display: flex; gap: 15px; justify-content: center;">
+                  <label style="display: flex; align-items: center; gap: 5px;">
+                    <input type="radio" 
+                           name="reset-hora-${pin}" 
+                           value="00:00" 
+                           ${resetHora === '00:00' ? 'checked' : ''} 
+                           onchange="actualizarResetHora('${pin}', '00:00')" />
+                    00:00
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 5px;">
+                    <input type="radio" 
+                           name="reset-hora-${pin}" 
+                           value="12:00" 
+                           ${resetHora === '12:00' ? 'checked' : ''} 
+                           onchange="actualizarResetHora('${pin}', '12:00')" />
+                    12:00
+                  </label>
                 </div>
               </div>
               
@@ -859,7 +932,21 @@
       }
     }
 
+    // Actualizar hora de reset automático
+    async function actualizarResetHora(pin, hora) {
+      try {
+        await db.collection('pines_acceso').doc(pin).update({
+          resetHora: hora
+        });
+        console.log(`✅ Hora de reset actualizada para PIN ${pin}: ${hora}`);
+      } catch (err) {
+        console.error("❌ Error al actualizar hora de reset:", err);
+        alert("Error al guardar la configuración.");
+      }
+    }
+
     window.resetearEstadisticas = resetearEstadisticas;
+    window.actualizarResetHora = actualizarResetHora;
 
     // --- PESTAÑAS ---
     document.querySelectorAll('.tab-btn').forEach(btn => {

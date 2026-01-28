@@ -288,6 +288,57 @@
       }
     }
 
+    // ✅ FUNCIÓN PARA VERIFICAR Y RESET AUTOMÁTICO
+    async function verificarYResetAutomatico() {
+      if (!pinFromUrl) return;
+
+      try {
+        const pinDoc = await db.collection('pines_acceso').doc(pinFromUrl).get();
+        if (!pinDoc.exists) return;
+
+        const pinData = pinDoc.data();
+        const resetHora = pinData.resetHora || '00:00';
+
+        const statsRef = db.collection('estadisticas_pins').doc(pinFromUrl);
+        const statsSnap = await statsRef.get();
+
+        if (!statsSnap.exists) return;
+
+        const statsData = statsSnap.data();
+        const ultimaActualizacion = statsData.ultimaActualizacion?.toDate();
+        if (!ultimaActualizacion) return;
+
+        const ahora = new Date();
+        const hoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
+        const ayer = new Date(hoy.getTime() - 24 * 60 * 60 * 1000);
+
+        let ultimaResetFecha;
+        if (resetHora === '00:00') {
+          ultimaResetFecha = hoy;
+        } else { // 12:00
+          const mediodiaHoy = new Date(hoy.getTime() + 12 * 60 * 60 * 1000);
+          if (ahora >= mediodiaHoy) {
+            ultimaResetFecha = mediodiaHoy;
+          } else {
+            const mediodiaAyer = new Date(ayer.getTime() + 12 * 60 * 60 * 1000);
+            ultimaResetFecha = mediodiaAyer;
+          }
+        }
+
+        if (ultimaActualizacion < ultimaResetFecha) {
+          console.log(`🔄 Reset automático para PIN ${pinFromUrl} a las ${resetHora}`);
+          await statsRef.set({
+            ciclosCompletos: 0,
+            totalEntradas: 0,
+            totalSalidas: 0,
+            ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        }
+      } catch (err) {
+        console.warn("⚠️ Error en reset automático:", err);
+      }
+    }
+
     async function registrar(tipo) {
       const pinInput = document.getElementById('pin');
       const pin = pinInput.value.trim();
@@ -333,12 +384,29 @@
           }
         }
 
-        // Guardar registro
+        // ✅ EJECUTAR VERIFICACIÓN DE RESET ANTES DE REGISTRAR
+        await verificarYResetAutomatico();
+
+        // ✅ OBTENER COMENTARIO DEL PIN DE ACCESO
+        let comentarioObra = '';
+        try {
+          if (pinFromUrl) {
+            const pinDoc = await db.collection('pines_acceso').doc(pinFromUrl).get();
+            if (pinDoc.exists) {
+              comentarioObra = pinDoc.data().comentario || '';
+            }
+          }
+        } catch (err) {
+          console.warn("No se pudo obtener el comentario del PIN:", err);
+        }
+
+        // Guardar registro con comentario
         await db.collection('registros_publicos').add({
           trabajadorId: pin,
           nombre: TRABAJADORES[pin],
           tipo: tipo,
-          fechaHora: firebase.firestore.FieldValue.serverTimestamp()
+          fechaHora: firebase.firestore.FieldValue.serverTimestamp(),
+          comentario: comentarioObra // ← ¡NUEVO CAMPO!
         });
 
         // Actualizar estado local
@@ -353,7 +421,7 @@
           }
         }
 
-        // ✅ ACTUALIZAR ESTADÍSTICAS (SIMPLIFICADO)
+        // ✅ ACTUALIZAR ESTADÍSTICAS
         if (pinFromUrl) {
           const statsRef = db.collection('estadisticas_pins').doc(pinFromUrl);
           
@@ -378,7 +446,7 @@
             ciclosCompletos++; // Cada salida válida = 1 ciclo
           }
           
-          // Guardar datos (reemplazar todo el documento)
+          // Guardar datos
           await statsRef.set({
             ciclosCompletos: ciclosCompletos,
             totalEntradas: totalEntradas,
