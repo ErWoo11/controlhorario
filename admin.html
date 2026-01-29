@@ -8,7 +8,19 @@
 <link rel="apple-touch-icon" href="logo-admin.png">
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Administrador - Sistema de Control</title>
+
+  <!-- Icons -->
+  <link rel="apple-touch-icon" href="logo-admin.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="logo-admin.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="logo-admin-512.png">
+  
+  <!-- iOS Safari -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Control Horario">
+
+
+<title>Administrador - Grupo Decoplac</title>
 <style>
 * {
 margin: 0;
@@ -37,7 +49,7 @@ margin-bottom: 30px;
 }
 .logo {
 width: 100%;
-max-width: 300 px;
+max-width: 300px;
 height: auto;
 border-radius: 16px;
 box-shadow: 0 6px 25px rgba(0,0,0,0.15);
@@ -148,23 +160,72 @@ border: 2px solid #e74c3c !important;
 background-color: #fdf2f2;
 }
 
-/* ✅ Estilo específico para reset automático */
+/* ✅ Estilo específico para reset automático - 100% responsive */
 .reset-controls {
 margin: 15px 0;
-padding: 10px;
-background: #fff;
-border-radius: 6px;
+padding: 12px;
+background: #f8f9fa;
+border-radius: 8px;
+border: 1px solid #e9ecef;
 }
+
+.reset-label {
+display: block;
+margin-bottom: 10px;
+font-weight: bold;
+color: #2c3e50;
+font-size: 14px;
+text-align: center;
+}
+
 .reset-options {
 display: flex;
-gap: 15px;
 justify-content: center;
+gap: 8px;
 flex-wrap: wrap;
 }
+
 .reset-option {
 display: flex;
 align-items: center;
-gap: 5px;
+gap: 6px;
+min-width: 70px;
+padding: 6px 10px;
+background: white;
+border: 1px solid #ddd;
+border-radius: 6px;
+font-size: 12px;
+transition: all 0.2s ease;
+}
+
+.reset-option:hover {
+border-color: #3498db;
+background: #f0f8ff;
+}
+
+.reset-option input {
+width: 16px;
+height: 16px;
+margin: 0;
+}
+
+/* ✅ Responsive para móviles muy pequeños */
+@media (max-width: 360px) {
+.reset-option {
+min-width: 60px;
+padding: 5px 8px;
+font-size: 11px;
+}
+
+.reset-option input {
+width: 14px;
+height: 14px;
+}
+
+.reset-label {
+font-size: 13px;
+margin-bottom: 8px;
+}
 }
 
 /* ✅ Responsive mejorado */
@@ -206,9 +267,6 @@ font-size: 18px;
 }
 input, button, select {
 padding: 8px;
-font-size: 12px;
-}
-.reset-option {
 font-size: 12px;
 }
 }
@@ -1110,61 +1168,68 @@ totalEntradas = data.totalEntradas || 0;
 totalSalidas = data.totalSalidas || 0;
 hayDatos = true;
 }
+
+// ✅ CONFIGURACIÓN DE RESET AUTOMÁTICO - RESPONSIVE
+const resetOptionsHTML = `
+  <div class="reset-controls">
+    <div class="reset-label">🕒 Reset automático:</div>
+    <div class="reset-options">
+      <label class="reset-option">
+        <input type="radio" 
+               name="reset-hora-${pin}" 
+               value="off" 
+               ${resetHora === 'off' ? 'checked' : ''} 
+               onchange="actualizarResetHora('${pin}', 'off')" />
+        OFF
+      </label>
+      <label class="reset-option">
+        <input type="radio" 
+               name="reset-hora-${pin}" 
+               value="00:00" 
+               ${resetHora === '00:00' ? 'checked' : ''} 
+               onchange="actualizarResetHora('${pin}', '00:00')" />
+        00:00
+      </label>
+      <label class="reset-option">
+        <input type="radio" 
+               name="reset-hora-${pin}" 
+               value="12:00" 
+               ${resetHora === '12:00' ? 'checked' : ''} 
+               onchange="actualizarResetHora('${pin}', '12:00')" />
+        12:00
+      </label>
+    </div>
+  </div>
+`;
+
 html += `
 <div style="background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 8px;">
-<h4>PIN: ${pin} ${pinData.comentario ? `(${pinData.comentario})` : ''}</h4>
-<!-- Contador global (grande y destacado) -->
-<div style="text-align: center; margin: 15px 0;">
-<div style="font-size: 32px; font-weight: bold; color: #2c3e50;">${ciclosCompletos}</div>
-<div style="color: #7f8c8d;">Personas que han entrado y salido</div>
-</div>
-<!-- Contadores secundarios -->
-<div style="display: flex; justify-content: space-around; margin: 10px 0; background: white; padding: 10px; border-radius: 6px;">
-<div style="text-align: center;">
-<div style="font-size: 18px; color: #2ecc71; font-weight: bold;">${totalEntradas}</div>
-<div>Entradas</div>
-</div>
-<div style="text-align: center;">
-<div style="font-size: 18px; color: #e74c3c; font-weight: bold;">${totalSalidas}</div>
-<div>Salidas</div>
-</div>
-</div>
-<!-- ✅ Configuración de reset automático MEJORADA -->
-<div class="reset-controls">
-<label style="display: block; margin-bottom: 8px; font-weight: bold; color: #2c3e50;">
-🕒 Reset automático de contadores:
-</label>
-<div class="reset-options">
-<label class="reset-option">
-<input type="radio"
-name="reset-hora-${pin}"
-value="off"
-${resetHora === 'off' ? 'checked' : ''}
-onchange="actualizarResetHora('${pin}', 'off')" />
-OFF
-</label>
-<label class="reset-option">
-<input type="radio"
-name="reset-hora-${pin}"
-value="00:00"
-${resetHora === '00:00' ? 'checked' : ''}
-onchange="actualizarResetHora('${pin}', '00:00')" />
-00:00
-</label>
-<label class="reset-option">
-<input type="radio"
-name="reset-hora-${pin}"
-value="12:00"
-${resetHora === '12:00' ? 'checked' : ''}
-onchange="actualizarResetHora('${pin}', '12:00')" />
-12:00
-</label>
-</div>
-</div>
-<button onclick="resetearEstadisticas('${pin}')"
-style="background: #e74c3c; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px;">
-🗑️ Resetear contadores
-</button>
+  <h4>PIN: ${pin} ${pinData.comentario ? `(${pinData.comentario})` : ''}</h4>
+  
+  <!-- Contador global (grande y destacado) -->
+  <div style="text-align: center; margin: 15px 0;">
+    <div style="font-size: 32px; font-weight: bold; color: #2c3e50;">${ciclosCompletos}</div>
+    <div style="color: #7f8c8d;">Personas que han entrado y salido</div>
+  </div>
+  
+  <!-- Contadores secundarios -->
+  <div style="display: flex; justify-content: space-around; margin: 10px 0; background: white; padding: 10px; border-radius: 6px;">
+    <div style="text-align: center;">
+      <div style="font-size: 18px; color: #2ecc71; font-weight: bold;">${totalEntradas}</div>
+      <div>Entradas</div>
+    </div>
+    <div style="text-align: center;">
+      <div style="font-size: 18px; color: #e74c3c; font-weight: bold;">${totalSalidas}</div>
+      <div>Salidas</div>
+    </div>
+  </div>
+  
+  ${resetOptionsHTML}
+  
+  <button onclick="resetearEstadisticas('${pin}')" 
+          style="background: #e74c3c; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px; width: 100%;">
+    🗑️ Resetear contadores
+  </button>
 </div>
 `;
 }
