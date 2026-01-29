@@ -1,6 +1,6 @@
 {
-  "name": "Control Horario Grupo Decoplac",
-  "short_name": "Control Horario",
+  "name": "Sistema Grupo Decoplac",
+  "short_name": "Grupo Decoplac",
   "description": "Sistema de control de jornada laboral y gestión de flota de vehículos",
   "start_url": "/controlhorario/",
   "display": "standalone",
