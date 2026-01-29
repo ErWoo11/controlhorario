@@ -1,1394 +1,1295 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-
 <!-- PWA y Responsive -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 <meta name="theme-color" content="#3498db">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="logo.png">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Admin - Control Horario</title>
+<style>
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+}
+body {
+font-family: Arial, sans-serif;
+background: url('fondo.png') repeat;
+background-size: 300px;
+background-color: #f5f5f5;
+padding: 20px;
+min-height: 100vh;
+max-width: 100vw;
+overflow-x: hidden;
+}
+.main-content {
+max-width: 800px;
+margin: 0 auto;
+text-align: center;
+}
+/* Logo */
+.header {
+text-align: center;
+margin-bottom: 30px;
+}
+.logo {
+width: 100%;
+max-width: 300 px;
+height: auto;
+border-radius: 16px;
+box-shadow: 0 6px 25px rgba(0,0,0,0.15);
+margin: 0 auto 40px;
+display: block;
+}
+#logo.fallback {
+background: #2c3e50;
+color: white;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 48px;
+font-weight: bold;
+border-radius: 16px;
+box-shadow: 0 6px 25px rgba(0,0,0,0.15);
+margin: 0 auto 40px;
+}
+/* Contenido */
+.container {
+background: rgba(255, 255, 255, 0.95);
+padding: 30px;
+border-radius: 12px;
+box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+h2, h3 {
+color: #2c3e50;
+text-align: center;
+}
+input, button, select {
+width: 100%;
+padding: 12px;
+margin: 8px 0;
+font-size: 16px;
+box-sizing: border-box;
+}
+button {
+background: #3498db;
+color: white;
+border: none;
+border-radius: 6px;
+cursor: pointer;
+}
+#logout {
+background: #e74c3c;
+}
+table {
+width: 100%;
+border-collapse: collapse;
+margin-top: 20px;
+}
+th, td {
+border: 1px solid #ddd;
+padding: 10px;
+text-align: center; /* ✅ Centrado */
+}
+th {
+background: #f2f2f2;
+}
+#datos, #login, #gestion-trabajadores, #pines-acceso, #tab-estadisticas, #tab-vehiculos {
+margin-top: 20px;
+}
+.hidden {
+display: none;
+}
+.tabs {
+display: flex;
+gap: 10px;
+margin-bottom: 20px;
+flex-wrap: wrap;
+}
+.tab-btn {
+flex: 1;
+min-width: 100px;
+background: #bdc3c7;
+cursor: pointer;
+font-weight: bold;
+}
+.tab-btn.active {
+background: #3498db;
+color: white;
+}
+.msg {
+padding: 8px;
+margin: 10px 0;
+border-radius: 4px;
+}
+.success {
+background: #d4edda;
+color: #155724;
+}
+.error {
+background: #f8d7da;
+color: #721c24;
+}
+.btn-usar-pin {
+background: #2ecc71;
+padding: 4px 8px;
+font-size: 12px;
+}
+.btn-borrar-todo {
+background: #e74c3c;
+margin-top: 15px;
+}
+/* Estilo para campo obligatorio */
+input.error {
+border: 2px solid #e74c3c !important;
+background-color: #fdf2f2;
+}
 
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin - Control Horario</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+/* ✅ Estilo específico para reset automático */
+.reset-controls {
+margin: 15px 0;
+padding: 10px;
+background: #fff;
+border-radius: 6px;
+}
+.reset-options {
+display: flex;
+gap: 15px;
+justify-content: center;
+flex-wrap: wrap;
+}
+.reset-option {
+display: flex;
+align-items: center;
+gap: 5px;
+}
 
-    body {
-      font-family: Arial, sans-serif;
-      background: url('fondo.png') repeat;
-      background-size: 300px;
-      background-color: #f5f5f5;
-      padding: 20px;
-      min-height: 100vh;
-    }
+/* ✅ Responsive mejorado */
+@media (max-width: 768px) {
+body {
+padding: 15px;
+}
+.container {
+padding: 20px;
+}
+input, button, select {
+padding: 10px;
+font-size: 14px;
+}
+table {
+font-size: 12px;
+}
+th, td {
+padding: 8px;
+}
+.tabs {
+gap: 5px;
+}
+.tab-btn {
+padding: 8px 0;
+font-size: 12px;
+}
+}
 
-    .main-content {
-      max-width: 800px;
-      margin: 0 auto;
-      text-align: center;
-    }
-
-    /* Logo */
-    .header {
-      text-align: center;
-      margin-bottom: 30px;
-    }
-
-    .logo {
-      width: 100%;
-      max-width: 300 px;
-      height: auto;
-      border-radius: 16px;
-      box-shadow: 0 6px 25px rgba(0,0,0,0.15);
-      margin: 0 auto 40px;
-      display: block;
-    }
-
-    #logo.fallback {
-      background: #2c3e50;
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 48px;
-      font-weight: bold;
-      border-radius: 16px;
-      box-shadow: 0 6px 25px rgba(0,0,0,0.15);
-      margin: 0 auto 40px;
-    }
-
-    /* Contenido */
-    .container {
-      background: rgba(255, 255, 255, 0.95);
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-    }
-
-    h2, h3 {
-      color: #2c3e50;
-      text-align: center;
-    }
-
-    input, button, select {
-      width: 100%;
-      padding: 12px;
-      margin: 8px 0;
-      font-size: 16px;
-      box-sizing: border-box;
-    }
-
-    button {
-      background: #3498db;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    #logout {
-      background: #e74c3c;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
-
-    th, td {
-      border: 1px solid #ddd;
-      padding: 10px;
-      text-align: center; /* ✅ Centrado */
-    }
-
-    th {
-      background: #f2f2f2;
-    }
-
-    #datos, #login, #gestion-trabajadores, #pines-acceso, #tab-estadisticas, #tab-vehiculos {
-      margin-top: 20px;
-    }
-
-    .hidden {
-      display: none;
-    }
-
-    .tabs {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-
-    .tab-btn {
-      flex: 1;
-      background: #bdc3c7;
-      cursor: pointer;
-      font-weight: bold;
-    }
-
-    .tab-btn.active {
-      background: #3498db;
-      color: white;
-    }
-
-    .msg {
-      padding: 8px;
-      margin: 10px 0;
-      border-radius: 4px;
-    }
-
-    .success {
-      background: #d4edda;
-      color: #155724;
-    }
-
-    .error {
-      background: #f8d7da;
-      color: #721c24;
-    }
-    
-    .btn-usar-pin {
-      background: #2ecc71;
-      padding: 4px 8px;
-      font-size: 12px;
-    }
-    
-    .btn-borrar-todo {
-      background: #e74c3c;
-      margin-top: 15px;
-    }
-    
-    /* Estilo para campo obligatorio */
-    input.error {
-      border: 2px solid #e74c3c !important;
-      background-color: #fdf2f2;
-    }
-  </style>
+@media (max-width: 480px) {
+body {
+padding: 10px;
+}
+.container {
+padding: 15px;
+}
+h2, h3 {
+font-size: 18px;
+}
+input, button, select {
+padding: 8px;
+font-size: 12px;
+}
+.reset-option {
+font-size: 12px;
+}
+}
+</style>
 </head>
 <body>
-  <div class="main-content">
-    <!-- Logo -->
-    <div class="header">
-      <img src="logo.png" alt="Logo de la Empresa" class="logo" id="logo">
-    </div>
-
-    <!-- Contenido -->
-    <div class="container">
-      <h2>Panel de Administración</h2>
-
-      <!-- Login -->
-      <div id="login">
-        <p>Inicia sesión para acceder.</p>
-        <input type="email" id="email" placeholder="Tu email" />
-        <input type="password" id="password" placeholder="Contraseña" />
-        <button id="btn-login">🔐 Iniciar sesión</button>
-        <div id="msg-login"></div>
-      </div>
-
-      <!-- Panel principal -->
-      <div id="datos" class="hidden">
-        <p>Bienvenido, <span id="user-email"></span> | <button id="logout">Cerrar sesión</button></p>
-
-        <!-- Pestañas -->
-        <div class="tabs">
-          <button class="tab-btn active" data-tab="registros">📝 Registros</button>
-          <button class="tab-btn" data-tab="trabajadores">👷 Gestión de Trabajadores</button>
-          <button class="tab-btn" data-tab="pines">🔐 PINs de acceso</button>
-          <button class="tab-btn" data-tab="vehiculos">🚐 Flota Vehículos</button>
-          <button class="tab-btn" data-tab="estadisticas">📊 Estadísticas</button>
-        </div>
-
-        <!-- Registros -->
-        <div id="tab-registros">
-          <h3>📝 Registros</h3>
-          <button id="cargar">↻ Cargar registros</button>
-          <button id="borrar-registros">🗑️ Borrar todos los registros</button>
-          <button id="exportar">📥 Exportar a Excel</button>
-          
-          <table>
-            <thead><tr><th>Nombre</th><th>Tipo</th><th>Fecha y Hora</th><th>Comentario</th></tr></thead>
-            <tbody id="tabla-cuerpo"></tbody>
-          </table>
-        </div>
-
-        <!-- Trabajadores -->
-        <div id="tab-trabajadores" class="hidden">
-          <h3>👷 Gestión de Trabajadores</h3>
-          <input type="text" id="nuevo-pin" placeholder="PIN (4 dígitos)" maxlength="4" />
-          <button id="btn-generar-pin">🎲 Generar PIN aleatorio</button>
-          <input type="text" id="nuevo-nombre" placeholder="Nombre completo" />
-          <button id="btn-agregar">➕ Añadir trabajador</button>
-          
-          <select id="orden-trabajadores">
-            <option value="pin">Ordenar por PIN</option>
-            <option value="nombre">Ordenar por nombre</option>
-            <option value="registro">Ordenar por fecha de registro</option>
-          </select>
-          
-          <div id="msg-trabajadores"></div>
-          <table id="tabla-trabajadores">
-            <thead><tr><th>PIN</th><th>Nombre</th><th>Acción</th></tr></thead>
-            <tbody id="cuerpo-trabajadores"></tbody>
-          </table>
-        </div>
-
-        <!-- PINs de acceso -->
-        <div id="tab-pines" class="hidden">
-          <h3>🔐 PINs de Acceso</h3>
-          
-          <button id="generar-pin" style="margin-bottom: 15px;">🔄 Generar nuevo PIN</button>
-          
-          <input type="text" id="comentario-pin" placeholder="Comentario obligatorio (ej: Obra Norte)" style="margin-bottom: 15px;" />
-          <div id="msg-pin"></div>
-          
-          <!-- Generador de URL -->
-          <div style="margin-top: 15px;">
-            <h4>🔗 Enlace de acceso</h4>
-            <input type="text" id="url-acceso" placeholder="URL se generará aquí" readonly style="margin-bottom: 10px;" />
-            <button id="generar-url">📋 Copiar enlace</button>
-          </div>
-          
-          <h4 style="margin-top: 20px;">Lista de PINs</h4>
-          <table id="tabla-pines">
-            <thead>
-              <tr>
-                <th>PIN</th>
-                <th>Fecha</th>
-                <th>Comentario</th>
-                <th>Estado</th>
-                <th>Acción</th>
-              </tr>
-            </thead>
-            <tbody id="cuerpo-pines">
-              <tr><td colspan="5">Cargando PINs...</td></tr>
-            </tbody>
-          </table>
-          
-          <button id="borrar-todos-pins" class="btn-borrar-todo" style="margin-top: 15px;">
-            🗑️ Borrar todos los PINs
-          </button>
-        </div>
-
-        <!-- Vehículos -->
-        <div id="tab-vehiculos" class="hidden">
-          <h3>🚐 Flota Vehículos</h3>
-          
-          <input type="text" id="matricula-vehiculo" placeholder="Matrícula (ej: ABC123)" style="margin-bottom: 10px;" />
-          <input type="text" id="modelo-vehiculo" placeholder="Modelo (ej: Ford Transit)" style="margin-bottom: 10px;" />
-          <button id="btn-agregar-vehiculo" style="margin-bottom: 20px;">➕ Añadir vehículo</button>
-          
-          <h4>📋 Lista de vehículos</h4>
-          <table id="tabla-vehiculos">
-            <thead>
-              <tr>
-                <th>Matrícula</th>
-                <th>Modelo</th>
-                <th>Estado</th>
-                <th>Acción</th>
-              </tr>
-            </thead>
-            <tbody id="cuerpo-vehiculos">
-              <tr><td colspan="4">Cargando vehículos...</td></tr>
-            </tbody>
-          </table>
-          
-          <div id="detalle-vehiculo" style="margin-top: 20px; display: none;">
-            <h4>🔗 Enlace de acceso para <span id="vehiculo-actual"></span></h4>
-            <input type="text" id="url-vehiculo" placeholder="URL se generará aquí" readonly style="margin-bottom: 10px;" />
-            <button id="copiar-url-vehiculo" style="background: #9b59b6; margin-bottom: 20px;">📋 Copiar enlace</button>
-            
-            <!-- ✅ BOTONES DE GESTIÓN REORGANIZADOS -->
-            <div style="display: flex; gap: 10px; margin-bottom: 20px; justify-content: center;">
-              <button id="cargar-vehiculos-detalle" style="background: #3498db; padding: 10px 15px; border-radius: 6px;">↻ Cargar registros</button>
-              <button id="borrar-registros-vehiculos-detalle" style="background: #e74c3c; padding: 10px 15px; border-radius: 6px;">🗑️ Borrar todos los registros</button>
-              <button id="exportar-vehiculos-detalle" style="background: #2ecc71; padding: 10px 15px; border-radius: 6px;">📥 Exportar a Excel</button>
-            </div>
-            
-            <h4>📋 Últimos usos</h4>
-            <div id="usos-vehiculo">
-              <p>Cargando registros...</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Estadísticas -->
-        <div id="tab-estadisticas" class="hidden">
-          <h3>📊 Estadísticas por PIN</h3>
-          
-          <button id="cargar-contadores" style="margin-bottom: 15px; background: #3498db; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer;">
-            🔄 Cargar contadores
-          </button>
-          
-          <div id="contenedores-estadisticas">
-            <p>Presiona "Cargar contadores" para ver las estadísticas.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-  <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
-
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyACVAm_3qDdghFNixYIYF6ToYOf_dIVodE",
-      authDomain: "control-horario-obra.firebaseapp.com",
-      projectId: "control-horario-obra",
-      storageBucket: "control-horario-obra.firebasestorage.app",
-      messagingSenderId: "566402636945",
-      appId: "1:566402636945:web:7a8fa39c373ae62a49b330"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-
-    const loginDiv = document.getElementById('login');
-    const datosDiv = document.getElementById('datos');
-    const userEmailSpan = document.getElementById('user-email');
-
-    // Formatear fecha
-    function formatearFecha(fecha) {
-      if (fecha?.toDate) fecha = fecha.toDate();
-      return new Intl.DateTimeFormat('es-ES', {
-        year: '2-digit',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-      }).format(fecha);
-    }
-
-    // Función para convertir milisegundos a HH:MM
-    function msToHHMM(ms) {
-      const totalMinutos = Math.floor(ms / (1000 * 60));
-      const horas = Math.floor(totalMinutos / 60);
-      const minutos = totalMinutos % 60;
-      return `${horas}:${minutos.toString().padStart(2, '0')}`;
-    }
-
-    // --- EXPORTAR A EXCEL MEJORADO ---
-    async function exportarExcel(datos) {
-      if (!window.XLSX) {
-        const script = document.createElement('script');
-        script.src = 'https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js';
-        script.onload = () => exportarConSheetJS(datos);
-        script.onerror = () => alert('❌ No se pudo cargar la librería de Excel.');
-        document.head.appendChild(script);
-      } else {
-        exportarConSheetJS(datos);
-      }
-    }
-
-    function exportarConSheetJS(datos) {
-      const XLSX = window.XLSX;
-      
-      // Hoja 1: Todos los registros
-      const registros = datos.map(r => ({
-        Nombre: r.nombre,
-        Tipo: r.tipo,
-        'Fecha y Hora': formatearFecha(r.fechaHora),
-        Comentario: r.comentario || '-'
-      }));
-      const wb = XLSX.utils.book_new();
-      const ws1 = XLSX.utils.json_to_sheet(registros);
-      XLSX.utils.book_append_sheet(wb, ws1, "Registros");
-
-      // Agrupar por obra/comentario
-      const obras = {};
-      datos.forEach(r => {
-        const obra = r.comentario || 'Sin obra';
-        if (!obras[obra]) obras[obra] = [];
-        obras[obra].push({
-          Nombre: r.nombre,
-          Tipo: r.tipo,
-          'Fecha y Hora': formatearFecha(r.fechaHora)
-        });
+<div class="main-content">
+<!-- Logo -->
+<div class="header">
+<img src="logo.png" alt="Logo de la Empresa" class="logo" id="logo">
+</div>
+<!-- Contenido -->
+<div class="container">
+<h2>Panel de Administración</h2>
+<!-- Login -->
+<div id="login">
+<p>Inicia sesión para acceder.</p>
+<input type="email" id="email" placeholder="Tu email" />
+<input type="password" id="password" placeholder="Contraseña" />
+<button id="btn-login">🔐 Iniciar sesión</button>
+<div id="msg-login"></div>
+</div>
+<!-- Panel principal -->
+<div id="datos" class="hidden">
+<p>Bienvenido, <span id="user-email"></span> | <button id="logout">Cerrar sesión</button></p>
+<!-- Pestañas -->
+<div class="tabs">
+<button class="tab-btn active" data-tab="registros">📝 Registros</button>
+<button class="tab-btn" data-tab="trabajadores">👷 Gestión de Trabajadores</button>
+<button class="tab-btn" data-tab="pines">🔐 PINs de acceso</button>
+<button class="tab-btn" data-tab="vehiculos">🚐 Flota Vehículos</button>
+<button class="tab-btn" data-tab="estadisticas">📊 Estadísticas</button>
+</div>
+<!-- Registros -->
+<div id="tab-registros">
+<h3>📝 Registros</h3>
+<button id="cargar">↻ Cargar registros</button>
+<button id="borrar-registros">🗑️ Borrar todos los registros</button>
+<button id="exportar">📥 Exportar a Excel</button>
+<table>
+<thead><tr><th>Nombre</th><th>Tipo</th><th>Fecha y Hora</th><th>Comentario</th></tr></thead>
+<tbody id="tabla-cuerpo"></tbody>
+</table>
+</div>
+<!-- Trabajadores -->
+<div id="tab-trabajadores" class="hidden">
+<h3>👷 Gestión de Trabajadores</h3>
+<input type="text" id="nuevo-pin" placeholder="PIN (4 dígitos)" maxlength="4" />
+<button id="btn-generar-pin">🎲 Generar PIN aleatorio</button>
+<input type="text" id="nuevo-nombre" placeholder="Nombre completo" />
+<button id="btn-agregar">➕ Añadir trabajador</button>
+<select id="orden-trabajadores">
+<option value="pin">Ordenar por PIN</option>
+<option value="nombre">Ordenar por nombre</option>
+<option value="registro">Ordenar por fecha de registro</option>
+</select>
+<div id="msg-trabajadores"></div>
+<table id="tabla-trabajadores">
+<thead><tr><th>PIN</th><th>Nombre</th><th>Acción</th></tr></thead>
+<tbody id="cuerpo-trabajadores"></tbody>
+</table>
+</div>
+<!-- PINs de acceso -->
+<div id="tab-pines" class="hidden">
+<h3>🔐 PINs de Acceso</h3>
+<button id="generar-pin" style="margin-bottom: 15px;">🔄 Generar nuevo PIN</button>
+<input type="text" id="comentario-pin" placeholder="Comentario obligatorio (ej: Obra Norte)" style="margin-bottom: 15px;" />
+<div id="msg-pin"></div>
+<!-- Generador de URL -->
+<div style="margin-top: 15px;">
+<h4>🔗 Enlace de acceso</h4>
+<input type="text" id="url-acceso" placeholder="URL se generará aquí" readonly style="margin-bottom: 10px;" />
+<button id="generar-url">📋 Copiar enlace</button>
+</div>
+<h4 style="margin-top: 20px;">Lista de PINs</h4>
+<table id="tabla-pines">
+<thead>
+<tr>
+<th>PIN</th>
+<th>Fecha</th>
+<th>Comentario</th>
+<th>Estado</th>
+<th>Acción</th>
+</tr>
+</thead>
+<tbody id="cuerpo-pines">
+<tr><td colspan="5">Cargando PINs...</td></tr>
+</tbody>
+</table>
+<button id="borrar-todos-pins" class="btn-borrar-todo" style="margin-top: 15px;">
+🗑️ Borrar todos los PINs
+</button>
+</div>
+<!-- Vehículos -->
+<div id="tab-vehiculos" class="hidden">
+<h3>🚐 Flota Vehículos</h3>
+<input type="text" id="matricula-vehiculo" placeholder="Matrícula (ej: ABC123)" style="margin-bottom: 10px;" />
+<input type="text" id="modelo-vehiculo" placeholder="Modelo (ej: Ford Transit)" style="margin-bottom: 10px;" />
+<button id="btn-agregar-vehiculo" style="margin-bottom: 20px;">➕ Añadir vehículo</button>
+<h4>📋 Lista de vehículos</h4>
+<table id="tabla-vehiculos">
+<thead>
+<tr>
+<th>Matrícula</th>
+<th>Modelo</th>
+<th>Estado</th>
+<th>Acción</th>
+</tr>
+</thead>
+<tbody id="cuerpo-vehiculos">
+<tr><td colspan="4">Cargando vehículos...</td></tr>
+</tbody>
+</table>
+<div id="detalle-vehiculo" style="margin-top: 20px; display: none;">
+<h4>🔗 Enlace de acceso para <span id="vehiculo-actual"></span></h4>
+<input type="text" id="url-vehiculo" placeholder="URL se generará aquí" readonly style="margin-bottom: 10px;" />
+<button id="copiar-url-vehiculo" style="background: #9b59b6; margin-bottom: 20px;">📋 Copiar enlace</button>
+<!-- ✅ BOTONES DE GESTIÓN REORGANIZADOS -->
+<div style="display: flex; gap: 10px; margin-bottom: 20px; justify-content: center; flex-wrap: wrap;">
+<button id="cargar-vehiculos-detalle" style="background: #3498db; padding: 10px 15px; border-radius: 6px;">↻ Cargar registros</button>
+<button id="borrar-registros-vehiculos-detalle" style="background: #e74c3c; padding: 10px 15px; border-radius: 6px;">🗑️ Borrar todos los registros</button>
+<button id="exportar-vehiculos-detalle" style="background: #2ecc71; padding: 10px 15px; border-radius: 6px;">📥 Exportar a Excel</button>
+</div>
+<h4>📋 Últimos usos</h4>
+<div id="usos-vehiculo">
+<p>Cargando registros...</p>
+</div>
+</div>
+</div>
+<!-- Estadísticas -->
+<div id="tab-estadisticas" class="hidden">
+<h3>📊 Estadísticas por PIN</h3>
+<button id="cargar-contadores" style="margin-bottom: 15px; background: #3498db; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer;">
+🔄 Cargar contadores
+</button>
+<div id="contenedores-estadisticas">
+<p>Presiona "Cargar contadores" para ver las estadísticas.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+<script>
+// ✅ Registrar Service Worker para PWA
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/controlhorario/sw.js')
+      .then((registration) => {
+        console.log('SW registrado:', registration);
+      })
+      .catch((error) => {
+        console.log('Error al registrar SW:', error);
       });
+  });
+}
 
-      // Crear hojas por obra
-      Object.keys(obras).forEach(obra => {
-        // Limpiar nombre de hoja (máximo 31 caracteres, sin caracteres inválidos)
-        let nombreHoja = obra.substring(0, 31).replace(/[/\\?*[\]:]/g, '_');
-        if (nombreHoja === '') nombreHoja = 'Sin_nombre';
-        
-        // Evitar nombres duplicados
-        let contador = 1;
-        let nombreFinal = nombreHoja;
-        while (wb.SheetNames.includes(nombreFinal)) {
-          nombreFinal = nombreHoja.substring(0, 28) + '_' + contador;
-          contador++;
-        }
-        
-        const wsObra = XLSX.utils.json_to_sheet(obras[obra]);
-        XLSX.utils.book_append_sheet(wb, wsObra, nombreFinal);
-      });
-
-      // Hoja: Cómputo de horas
-      const trabajadores = {};
-      datos.forEach(r => {
-        if (!trabajadores[r.nombre]) trabajadores[r.nombre] = [];
-        const fecha = r.fechaHora.toDate ? r.fechaHora.toDate() : new Date(r.fechaHora);
-        trabajadores[r.nombre].push({ tipo: r.tipo, fecha: fecha, comentario: r.comentario || 'Sin obra' });
-      });
-
-      const computo = [];
-      for (const nombre in trabajadores) {
-        const eventos = trabajadores[nombre].sort((a, b) => a.fecha - b.fecha);
-        let totalMs = 0;
-        let ultimaEntrada = null;
-        
-        for (const ev of eventos) {
-          if (ev.tipo === 'entrada') {
-            ultimaEntrada = ev.fecha;
-          } else if (ev.tipo === 'salida' && ultimaEntrada) {
-            totalMs += ev.fecha - ultimaEntrada;
-            ultimaEntrada = null;
-          }
-        }
-        
-        if (totalMs > 0) {
-          computo.push({ 
-            Nombre: nombre, 
-            'Horas (HH:MM)': msToHHMM(totalMs),
-            'Obras': [...new Set(trabajadores[nombre].map(e => e.comentario))].join(', ')
-          });
-        }
-      }
-
-      const ws2 = XLSX.utils.json_to_sheet(computo);
-      XLSX.utils.book_append_sheet(wb, ws2, "Cómputo horas");
-      
-      // Guardar archivo
-      XLSX.writeFile(wb, "registros_horario.xlsx");
-    }
-
-    // --- EXPORTAR VEHÍCULOS A EXCEL ---
-    async function exportarVehiculosExcel(datos) {
-      if (!window.XLSX) {
-        const script = document.createElement('script');
-        script.src = 'https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js';
-        script.onload = () => exportarVehiculosConSheetJS(datos);
-        script.onerror = () => alert('❌ No se pudo cargar la librería de Excel.');
-        document.head.appendChild(script);
-      } else {
-        exportarVehiculosConSheetJS(datos);
-      }
-    }
-
-    async function exportarVehiculosConSheetJS(datos) {
-      const XLSX = window.XLSX;
-      
-      // Hoja 1: Todos los registros
-      const registros = datos.map(r => ({
-        'Matrícula': r.matricula,
-        'Modelo': r.modelo,
-        'Conductor': r.nombreConductor,
-        'Fecha y Hora': formatearFecha(r.fechaHora)
-      }));
-      const wb = XLSX.utils.book_new();
-      const ws1 = XLSX.utils.json_to_sheet(registros);
-      XLSX.utils.book_append_sheet(wb, ws1, "Todos los usos");
-
-      // Agrupar por vehículo
-      const vehiculos = {};
-      datos.forEach(r => {
-        const vehiculo = `${r.matricula} - ${r.modelo}`;
-        if (!vehiculos[vehiculo]) vehiculos[vehiculo] = [];
-        vehiculos[vehiculo].push({
-          'Conductor': r.nombreConductor,
-          'Fecha y Hora': formatearFecha(r.fechaHora)
-        });
-      });
-
-      // Crear hojas por vehículo
-      Object.keys(vehiculos).forEach(vehiculo => {
-        // Limpiar nombre de hoja (máximo 31 caracteres)
-        let nombreHoja = vehiculo.substring(0, 31).replace(/[/\\?*[\]:]/g, '_');
-        if (nombreHoja === '') nombreHoja = 'Vehiculo_Sin_Nombre';
-        
-        // Evitar nombres duplicados
-        let contador = 1;
-        let nombreFinal = nombreHoja;
-        while (wb.SheetNames.includes(nombreFinal)) {
-          nombreFinal = nombreHoja.substring(0, 28) + '_' + contador;
-          contador++;
-        }
-        
-        const wsVehiculo = XLSX.utils.json_to_sheet(vehiculos[vehiculo]);
-        XLSX.utils.book_append_sheet(wb, wsVehiculo, nombreFinal);
-      });
-
-      // Guardar archivo
-      XLSX.writeFile(wb, "uso_vehiculos.xlsx");
-    }
-
-    // --- REGISTROS ---
-    async function cargarRegistros() {
-      const cuerpo = document.getElementById('tabla-cuerpo');
-      cuerpo.innerHTML = '<tr><td colspan="4">Cargando...</td></tr>';
-      try {
-        const snapshot = await db.collection('registros_publicos')
-          .orderBy('fechaHora', 'desc')
-          .limit(500)
-          .get();
-
-        const filas = [];
-        const datos = [];
-        snapshot.forEach(doc => {
-          const r = doc.data();
-          datos.push(r);
-          const comentario = r.comentario || '-';
-          filas.push(`<tr><td>${r.nombre}</td><td>${r.tipo}</td><td>${formatearFecha(r.fechaHora)}</td><td>${comentario}</td></tr>`);
-        });
-        cuerpo.innerHTML = filas.join('');
-        window.datosExportar = datos;
-      } catch (err) {
-        cuerpo.innerHTML = '<tr><td colspan="4">Error al cargar</td></tr>';
-        console.error(err);
-      }
-    }
-
-    async function borrarTodosRegistros() {
-      if (!confirm("⚠️ ¿Estás seguro? Esto borrará TODOS los registros de jornada.")) return;
-      if (!confirm("🔴 ¡CONFIRMACIÓN FINAL! ¿Borrar todos los registros?")) return;
-
-      try {
-        const snapshot = await db.collection('registros_publicos').get();
-        const batch = db.batch();
-        snapshot.docs.forEach(doc => batch.delete(doc.ref));
-        await batch.commit();
-        alert('✅ Todos los registros han sido eliminados.');
-        cargarRegistros();
-      } catch (err) {
-        alert('❌ Error al borrar: ' + err.message);
-        console.error(err);
-      }
-    }
-
-    // --- REGISTROS VEHÍCULOS ---
-    let DATOS_VEHICULOS = [];
-
-    async function cargarRegistrosVehiculos() {
-      const contenedor = document.getElementById('usos-vehiculo');
-      contenedor.innerHTML = '<p>Cargando registros...</p>';
-      
-      try {
-        const snapshot = await db.collection('uso_vehiculos')
-          .orderBy('fechaHora', 'desc')
-          .limit(100)
-          .get();
-
-        const datos = [];
-        snapshot.forEach(doc => {
-          const r = doc.data();
-          datos.push(r);
-        });
-        
-        DATOS_VEHICULOS = datos;
-        
-        // Actualizar vista si hay vehículo seleccionado
-        const vehiculoActual = document.getElementById('vehiculo-actual').textContent;
-        if (vehiculoActual) {
-          actualizarUsosVehiculo();
-        }
-        
-      } catch (err) {
-        contenedor.innerHTML = '<p>Error al cargar registros</p>';
-        console.error(err);
-      }
-    }
-
-    async function borrarTodosRegistrosVehiculos() {
-      if (!confirm("⚠️ ¿Estás seguro? Esto borrará TODOS los registros de uso de vehículos.")) return;
-      if (!confirm("🔴 ¡CONFIRMACIÓN FINAL! ¿Borrar todos los registros de vehículos?")) return;
-
-      try {
-        const snapshot = await db.collection('uso_vehiculos').get();
-        const batch = db.batch();
-        snapshot.docs.forEach(doc => batch.delete(doc.ref));
-        await batch.commit();
-        alert('✅ Todos los registros de vehículos han sido eliminados.');
-        cargarRegistrosVehiculos();
-        actualizarUsosVehiculo();
-      } catch (err) {
-        alert('❌ Error al borrar: ' + err.message);
-        console.error(err);
-      }
-    }
-
-    function actualizarUsosVehiculo() {
-      const contenedor = document.getElementById('usos-vehiculo');
-      const vehiculoId = document.getElementById('url-vehiculo').value.split('vehiculo=')[1];
-      
-      if (!vehiculoId) {
-        contenedor.innerHTML = '<p>Selecciona un vehículo</p>';
-        return;
-      }
-      
-      const registrosVehiculo = DATOS_VEHICULOS.filter(r => r.vehiculoId === vehiculoId);
-      
-      if (registrosVehiculo.length === 0) {
-        contenedor.innerHTML = '<p>No hay registros de uso</p>';
-      } else {
-        let html = `
-          <table style="width:100%; border-collapse: collapse; margin-top: 10px;">
-            <thead>
-              <tr>
-                <th>Matrícula</th>
-                <th>Modelo</th>
-                <th>Conductor</th>
-                <th>Fecha/Hora</th>
-              </tr>
-            </thead>
-            <tbody>
-        `;
-        registrosVehiculo.slice(0, 10).forEach(r => {
-          html += `
-            <tr>
-              <td>${r.matricula || '-'}</td>
-              <td>${r.modelo || '-'}</td>
-              <td>${r.nombreConductor}</td>
-              <td>${formatearFecha(r.fechaHora)}</td>
-            </tr>
-          `;
-        });
-        html += '</tbody></table>';
-        contenedor.innerHTML = html;
-      }
-    }
-
-    // --- TRABAJADORES ---
-    async function cargarTrabajadores() {
-      const cuerpo = document.getElementById('cuerpo-trabajadores');
-      cuerpo.innerHTML = '<tr><td colspan="3">Cargando...</td></tr>';
-      try {
-        const snapshot = await db.collection('trabajadores').get();
-        const lista = [];
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          lista.push({
-            id: doc.id,
-            pin: data.pin,
-            nombre: data.nombre,
-            fechaRegistro: data.fechaRegistro
-          });
-        });
-
-        const criterio = document.getElementById('orden-trabajadores').value;
-        if (criterio === 'pin') {
-          lista.sort((a, b) => parseInt(a.pin) - parseInt(b.pin));
-        } else if (criterio === 'nombre') {
-          lista.sort((a, b) => a.nombre.localeCompare(b.nombre));
-        } else if (criterio === 'registro') {
-          lista.sort((a, b) => {
-            const fechaA = a.fechaRegistro?.toDate ? a.fechaRegistro.toDate().getTime() : 0;
-            const fechaB = b.fechaRegistro?.toDate ? b.fechaRegistro.toDate().getTime() : 0;
-            return fechaB - fechaA;
-          });
-        }
-
-        const filas = lista.map(t => `
-          <tr>
-            <td>${t.pin}</td>
-            <td>${t.nombre}</td>
-            <td>
-              <button onclick="editarTrabajador('${t.id}', '${t.pin.replace(/'/g, "\\'")}', '${t.nombre.replace(/'/g, "\\'")}')" style="margin-right:5px;">✏️</button>
-              <button onclick="eliminarTrabajador('${t.id}')">🗑️</button>
-            </td>
-          </tr>
-        `);
-
-        window.listaTrabajadores = {};
-        lista.forEach(t => {
-          window.listaTrabajadores[t.id] = t;
-        });
-
-        cuerpo.innerHTML = filas.join('');
-      } catch (err) {
-        cuerpo.innerHTML = '<tr><td colspan="3">Error</td></tr>';
-        console.error(err);
-      }
-    }
-
-    // Generar PIN aleatorio único
-    function generarPINUnico() {
-      const pinInput = document.getElementById('nuevo-pin');
-      const pinesExistentes = new Set();
-      if (window.listaTrabajadores) {
-        Object.values(window.listaTrabajadores).forEach(t => {
-          pinesExistentes.add(t.pin);
-        });
-      }
-
-      let intentos = 0;
-      const maxIntentos = 100;
-      let pin;
-      do {
-        pin = Math.floor(1000 + Math.random() * 9000).toString();
-        intentos++;
-      } while (pinesExistentes.has(pin) && intentos < maxIntentos);
-
-      if (intentos >= maxIntentos) {
-        alert("⚠️ No se pudo generar un PIN único.");
-        return;
-      }
-
-      pinInput.value = pin;
-      document.getElementById('msg-trabajadores').textContent = `✅ PIN generado: ${pin}`;
-      document.getElementById('msg-trabajadores').className = 'success';
-    }
-
-    async function agregarTrabajador() {
-      const pin = document.getElementById('nuevo-pin').value.trim();
-      const nombre = document.getElementById('nuevo-nombre').value.trim();
-      const msg = document.getElementById('msg-trabajadores');
-
-      if (!pin || !nombre || pin.length !== 4 || isNaN(pin)) {
-        msg.textContent = '⚠️ PIN debe ser 4 dígitos y nombre obligatorio.';
-        msg.className = 'error';
-        return;
-      }
-
-      const yaExiste = Object.values(window.listaTrabajadores || {}).some(t => 
-        t.pin === pin || t.nombre === nombre
-      );
-      if (yaExiste) {
-        msg.textContent = '❌ PIN o nombre ya existen.';
-        msg.className = 'error';
-        return;
-      }
-
-      try {
-        await db.collection('trabajadores').add({ 
-          pin, 
-          nombre,
-          fechaRegistro: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        msg.textContent = '✅ Trabajador añadido.';
-        msg.className = 'success';
-        document.getElementById('nuevo-pin').value = '';
-        document.getElementById('nuevo-nombre').value = '';
-        cargarTrabajadores();
-      } catch (err) {
-        msg.textContent = '❌ Error: ' + err.message;
-        msg.className = 'error';
-        console.error(err);
-      }
-    }
-
-    // Funciones globales
-    window.eliminarTrabajador = async (id) => {
-      if (!confirm('¿Eliminar este trabajador?')) return;
-      try {
-        await db.collection('trabajadores').doc(id).delete();
-        cargarTrabajadores();
-      } catch (err) {
-        alert('Error al eliminar.');
-        console.error(err);
-      }
-    };
-
-    window.editarTrabajador = (id, pin, nombre) => {
-      const nuevoPin = prompt("Editar PIN (4 dígitos):", pin);
-      const nuevoNombre = prompt("Editar nombre:", nombre);
-      
-      if (nuevoPin === null || nuevoNombre === null) return;
-      if (!nuevoPin || !nuevoNombre || nuevoPin.length !== 4 || isNaN(nuevoPin)) {
-        alert("⚠️ PIN debe ser 4 dígitos.");
-        return;
-      }
-
-      const duplicado = Object.values(window.listaTrabajadores || {}).some(t => 
-        t.id !== id && (t.pin === nuevoPin || t.nombre === nuevoNombre)
-      );
-      if (duplicado) {
-        alert("❌ PIN o nombre ya existen.");
-        return;
-      }
-
-      db.collection('trabajadores').doc(id).update({ pin: nuevoPin, nombre: nuevoNombre })
-        .then(() => {
-          alert("✅ Trabajador actualizado.");
-          cargarTrabajadores();
-        })
-        .catch(err => {
-          alert("❌ Error: " + err.message);
-        });
-    };
-
-    // --- PIN DE ACCESO ---
-    async function guardarPIN(pin, activo, comentario) {
-      try {
-        await db.collection('pines_acceso').doc(pin).set({
-          pin: pin,
-          activo: activo,
-          comentario: comentario || '',
-          resetHora: '00:00', // ✅ Por defecto 00:00
-          timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        document.getElementById('comentario-pin').value = '';
-        document.getElementById('url-acceso').value = `https://erwoo11.github.io/controlhorario/registro.html?pin=${pin}`;
-        document.getElementById('msg-pin').textContent = '✅ PIN guardado';
-        document.getElementById('msg-pin').className = 'success';
-        
-        cargarPinesAcceso();
-      } catch (err) {
-        console.error("Error al guardar PIN:", err);
-        document.getElementById('msg-pin').textContent = '❌ Error: ' + err.message;
-        document.getElementById('msg-pin').className = 'error';
-      }
-    }
-
-    // ✅ GENERAR PIN CON COMENTARIO OBLIGATORIO
-    async function generarPIN() {
-      const comentarioInput = document.getElementById('comentario-pin');
-      const comentario = comentarioInput.value.trim();
-      
-      // Quitar clase de error si existía
-      comentarioInput.classList.remove('error');
-      
-      if (!comentario) {
-        comentarioInput.classList.add('error');
-        alert("⚠️ El comentario es obligatorio. Por ejemplo: 'Obra Norte', 'Turno mañana', etc.");
-        comentarioInput.focus();
-        return;
-      }
-      
-      const pin = Math.floor(1000 + Math.random() * 9000).toString();
-      await guardarPIN(pin, true, comentario);
-    }
-
-    async function cargarPinesAcceso() {
-      try {
-        const snapshot = await db.collection('pines_acceso')
-          .orderBy('timestamp', 'desc')
-          .get();
-        
-        const tbody = document.getElementById('cuerpo-pines');
-        if (snapshot.empty) {
-          tbody.innerHTML = '<tr><td colspan="5">No hay PINs creados</td></tr>';
-          return;
-        }
-        
-        let filas = '';
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          const fecha = data.timestamp?.toDate ? 
-            new Intl.DateTimeFormat('es-ES', { 
-              year: '2-digit', month: '2-digit', day: '2-digit',
-              hour: '2-digit', minute: '2-digit'
-            }).format(data.timestamp.toDate()) : 'Sin fecha';
-          
-          filas += `
-            <tr>
-              <td><strong>${data.pin}</strong></td>
-              <td>${fecha}</td>
-              <td>${data.comentario || '-'}</td>
-              <td>
-                <label style="display: flex; align-items: center; gap: 5px;">
-                  <input type="checkbox" 
-                         class="toggle-pin-individual" 
-                         data-pin="${data.pin}" 
-                         ${data.activo ? 'checked' : ''} />
-                  ${data.activo ? '✅ Activo' : '❌ Inactivo'}
-                </label>
-              </td>
-              <td>
-                <button class="btn-usar-pin" data-pin="${data.pin}" data-comentario="${data.comentario || ''}">
-                  Usar
-                </button>
-              </td>
-            </tr>
-          `;
-        });
-        
-        tbody.innerHTML = filas;
-        
-        // Eventos checkboxes individuales
-        document.querySelectorAll('.toggle-pin-individual').forEach(checkbox => {
-          checkbox.addEventListener('change', async (e) => {
-            const pin = e.target.dataset.pin;
-            const activo = e.target.checked;
-            
-            const docRef = db.collection('pines_acceso').doc(pin);
-            const docSnap = await docRef.get();
-            const comentario = docSnap.exists ? docSnap.data().comentario : '';
-            
-            await docRef.update({
-              activo: activo,
-              timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            
-            cargarPinesAcceso();
-          });
-        });
-        
-        // Eventos "Usar"
-        document.querySelectorAll('.btn-usar-pin').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            const pin = e.target.dataset.pin;
-            const comentario = e.target.dataset.comentario;
-            document.getElementById('comentario-pin').value = comentario;
-            document.getElementById('url-acceso').value = `https://erwoo11.github.io/controlhorario/registro.html?pin=${pin}`;
-          });
-        });
-        
-      } catch (err) {
-        console.error("Error al cargar PINs:", err);
-        document.getElementById('cuerpo-pines').innerHTML = 
-          '<tr><td colspan="5">Error al cargar</td></tr>';
-      }
-    }
-
-    // --- VEHÍCULOS ---
-    async function cargarVehiculos() {
-      try {
-        const snapshot = await db.collection('vehiculos').get();
-        const tbody = document.getElementById('cuerpo-vehiculos');
-        
-        if (snapshot.empty) {
-          tbody.innerHTML = '<tr><td colspan="4">No hay vehículos registrados</td></tr>';
-          return;
-        }
-        
-        let filas = '';
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          const estado = data.activo ? '✅ Activo' : '❌ Inactivo';
-          
-          filas += `
-            <tr>
-              <td><strong>${data.matricula}</strong></td>
-              <td>${data.modelo}</td>
-              <td>${estado}</td>
-              <td>
-                <button onclick="mostrarDetalleVehiculo('${doc.id}', '${data.matricula}', '${data.modelo}')" style="margin-right: 5px; background: #3498db;">📋</button>
-                <button onclick="toggleVehiculo('${doc.id}', ${data.activo})" style="background: ${data.activo ? '#e74c3c' : '#2ecc71'}; margin-right: 5px;">
-                  ${data.activo ? '❌' : '✅'}
-                </button>
-                <button onclick="eliminarVehiculo('${doc.id}', '${data.matricula}')" style="background: #e74c3c;">
-                  🗑️
-                </button>
-              </td>
-            </tr>
-          `;
-        });
-        
-        tbody.innerHTML = filas;
-        cargarRegistrosVehiculos(); // Cargar registros para mostrar en detalle
-      } catch (err) {
-        console.error("Error al cargar vehículos:", err);
-        document.getElementById('cuerpo-vehiculos').innerHTML = '<tr><td colspan="4">Error al cargar</td></tr>';
-      }
-    }
-
-    async function agregarVehiculo() {
-      const matricula = document.getElementById('matricula-vehiculo').value.trim().toUpperCase();
-      const modelo = document.getElementById('modelo-vehiculo').value.trim();
-      
-      if (!matricula || !modelo) {
-        alert("⚠️ Matrícula y modelo son obligatorios");
-        return;
-      }
-      
-      // Validar formato de matrícula (opcional)
-      if (matricula.length < 5 || matricula.length > 8) {
-        alert("⚠️ Formato de matrícula no válido");
-        return;
-      }
-      
-      try {
-        await db.collection('vehiculos').add({
-          matricula: matricula,
-          modelo: modelo,
-          activo: true,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        alert("✅ Vehículo añadido correctamente");
-        document.getElementById('matricula-vehiculo').value = '';
-        document.getElementById('modelo-vehiculo').value = '';
-        cargarVehiculos();
-      } catch (err) {
-        console.error("Error al añadir vehículo:", err);
-        alert("❌ Error al añadir vehículo");
-      }
-    }
-
-    async function toggleVehiculo(id, estadoActual) {
-      try {
-        await db.collection('vehiculos').doc(id).update({
-          activo: !estadoActual
-        });
-        cargarVehiculos();
-      } catch (err) {
-        console.error("Error al cambiar estado:", err);
-      }
-    }
-
-    // Eliminar vehículo
-    async function eliminarVehiculo(id, matricula) {
-      if (!confirm(`⚠️ ¿Estás seguro de que quieres ELIMINAR el vehículo ${matricula}?`)) return;
-      
-      if (!confirm("🔴 ¡CONFIRMACIÓN FINAL! Esta acción es irreversible.")) return;
-
-      try {
-        // Eliminar el vehículo
-        await db.collection('vehiculos').doc(id).delete();
-        
-        // Eliminar también los registros de uso de este vehículo
-        const registrosSnapshot = await db.collection('uso_vehiculos')
-          .where('vehiculoId', '==', id)
-          .get();
-        
-        if (!registrosSnapshot.empty) {
-          const batch = db.batch();
-          registrosSnapshot.docs.forEach(doc => batch.delete(doc.ref));
-          await batch.commit();
-        }
-        
-        alert(`✅ Vehículo ${matricula} eliminado correctamente.`);
-        cargarVehiculos();
-        
-        // Ocultar detalle si era el vehículo eliminado
-        const vehiculoActual = document.getElementById('url-vehiculo').value.split('vehiculo=')[1];
-        if (vehiculoActual === id) {
-          document.getElementById('detalle-vehiculo').style.display = 'none';
-        }
-        
-      } catch (err) {
-        console.error("Error al eliminar vehículo:", err);
-        alert("❌ Error al eliminar el vehículo.");
-      }
-    }
-
-    async function mostrarDetalleVehiculo(id, matricula, modelo) {
-      document.getElementById('vehiculo-actual').textContent = `${matricula} (${modelo})`;
-      document.getElementById('url-vehiculo').value = `https://erwoo11.github.io/controlhorario/vehiculo.html?vehiculo=${id}`;
-      document.getElementById('detalle-vehiculo').style.display = 'block';
-      
-      // Forzar actualización de usos
-      setTimeout(() => {
-        actualizarUsosVehiculo();
-      }, 100);
-    }
-
-    function copiarUrlVehiculo() {
-      const url = document.getElementById('url-vehiculo').value;
-      if (!url) return;
-      
-      navigator.clipboard.writeText(url).then(() => {
-        alert("✅ Enlace copiado al portapapeles");
-      }).catch(err => {
-        console.warn("No se pudo copiar:", err);
-        const textArea = document.createElement("textarea");
-        textArea.value = url;
-        document.body.appendChild(textArea);
-        textArea.select();
-        document.execCommand("copy");
-        document.body.removeChild(textArea);
-        alert("✅ Enlace copiado (método alternativo)");
-      });
-    }
-
-    // Borrar todos los PINs y sus estadísticas
-    async function borrarTodosPins() {
-      if (!confirm("⚠️ ¿Estás seguro de que quieres BORRAR TODOS los PINs de acceso y sus estadísticas?")) return;
-      const respuesta = prompt("Escribe 'BORRAR TODO' para confirmar:");
-      if (respuesta !== "BORRAR TODO") {
-        alert("Operación cancelada.");
-        return;
-      }
-
-      try {
-        // Obtener todos los PINs de acceso
-        const pinesSnapshot = await db.collection('pines_acceso').get();
-        
-        // Crear batch para borrar PINs de acceso
-        const batchPines = db.batch();
-        pinesSnapshot.docs.forEach(doc => batchPines.delete(doc.ref));
-        await batchPines.commit();
-
-        // Crear batch para borrar estadísticas
-        const batchStats = db.batch();
-        pinesSnapshot.docs.forEach(doc => {
-          const pin = doc.data().pin;
-          if (pin) {
-            batchStats.delete(db.collection('estadisticas_pins').doc(pin));
-          }
-        });
-        await batchStats.commit();
-
-        document.getElementById('comentario-pin').value = '';
-        document.getElementById('url-acceso').value = '';
-        
-        alert("✅ Todos los PINs y sus estadísticas han sido eliminados.");
-        cargarPinesAcceso();
-      } catch (err) {
-        console.error("Error al borrar PINs y estadísticas:", err);
-        alert("❌ Error al borrar: " + err.message);
-      }
-    }
-
-    // Generar y copiar URL
-    function generarURLAcceso() {
-      const url = document.getElementById('url-acceso').value;
-      if (!url || !url.includes('?pin=')) {
-        alert("Genera un PIN primero");
-        return;
-      }
-      
-      navigator.clipboard.writeText(url).then(() => {
-        alert("✅ Enlace copiado al portapapeles");
-      }).catch(err => {
-        console.warn("No se pudo copiar:", err);
-        const textArea = document.createElement("textarea");
-        textArea.value = url;
-        document.body.appendChild(textArea);
-        textArea.select();
-        document.execCommand("copy");
-        document.body.removeChild(textArea);
-        alert("✅ Enlace copiado (método alternativo)");
-      });
-    }
-
-    // --- ESTADÍSTICAS ---
-    async function cargarEstadisticas() {
-      try {
-        const pinesSnapshot = await db.collection('pines_acceso').get();
-        const contenedor = document.getElementById('contenedores-estadisticas');
-        
-        if (pinesSnapshot.empty) {
-          contenedor.innerHTML = '<p>No hay PINs creados aún.</p>';
-          return;
-        }
-        
-        let html = '';
-        let hayDatos = false;
-
-        for (const pinDoc of pinesSnapshot.docs) {
-          const pinData = pinDoc.data();
-          const pin = pinData.pin;
-          
-          // Obtener configuración de reset
-          const resetHora = pinData.resetHora || '00:00'; // Por defecto 00:00
-          
-          const statsRef = db.collection('estadisticas_pins').doc(pin);
-          const statsSnap = await statsRef.get();
-          
-          let ciclosCompletos = 0, totalEntradas = 0, totalSalidas = 0;
-          if (statsSnap.exists) {
-            const data = statsSnap.data();
-            ciclosCompletos = data.ciclosCompletos || 0;
-            totalEntradas = data.totalEntradas || 0;
-            totalSalidas = data.totalSalidas || 0;
-            hayDatos = true;
-          }
-          
-          html += `
-            <div style="background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 8px;">
-              <h4>PIN: ${pin} ${pinData.comentario ? `(${pinData.comentario})` : ''}</h4>
-              
-              <!-- Contador global (grande y destacado) -->
-              <div style="text-align: center; margin: 15px 0;">
-                <div style="font-size: 32px; font-weight: bold; color: #2c3e50;">${ciclosCompletos}</div>
-                <div style="color: #7f8c8d;">Personas que han entrado y salido</div>
-              </div>
-              
-              <!-- Contadores secundarios -->
-              <div style="display: flex; justify-content: space-around; margin: 10px 0; background: white; padding: 10px; border-radius: 6px;">
-                <div style="text-align: center;">
-                  <div style="font-size: 18px; color: #2ecc71; font-weight: bold;">${totalEntradas}</div>
-                  <div>Entradas</div>
-                </div>
-                <div style="text-align: center;">
-                  <div style="font-size: 18px; color: #e74c3c; font-weight: bold;">${totalSalidas}</div>
-                  <div>Salidas</div>
-                </div>
-              </div>
-              
-              <!-- ✅ Configuración de reset automático -->
-              <div style="margin: 15px 0; padding: 10px; background: #fff; border-radius: 6px;">
-                <label style="display: block; margin-bottom: 8px; font-weight: bold; color: #2c3e50;">
-                  🕒 Reset automático de contadores:
-                </label>
-                <div style="display: flex; gap: 15px; justify-content: center;">
-                  <label style="display: flex; align-items: center; gap: 5px;">
-                    <input type="radio" 
-                           name="reset-hora-${pin}" 
-                           value="00:00" 
-                           ${resetHora === '00:00' ? 'checked' : ''} 
-                           onchange="actualizarResetHora('${pin}', '00:00')" />
-                    00:00
-                  </label>
-                  <label style="display: flex; align-items: center; gap: 5px;">
-                    <input type="radio" 
-                           name="reset-hora-${pin}" 
-                           value="12:00" 
-                           ${resetHora === '12:00' ? 'checked' : ''} 
-                           onchange="actualizarResetHora('${pin}', '12:00')" />
-                    12:00
-                  </label>
-                </div>
-              </div>
-              
-              <button onclick="resetearEstadisticas('${pin}')" 
-                      style="background: #e74c3c; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px;">
-                🗑️ Resetear contadores
-              </button>
-            </div>
-          `;
-        }
-        
-        if (!hayDatos) {
-          contenedor.innerHTML = '<p>No hay registros de estadísticas aún.</p>' + html;
-        } else {
-          contenedor.innerHTML = html;
-        }
-        
-      } catch (err) {
-        console.error("Error al cargar estadísticas:", err);
-        document.getElementById('contenedores-estadisticas').innerHTML = 
-          '<p style="color: #e74c3c;">❌ Error al cargar estadísticas. Revisa la consola.</p>';
-      }
-    }
-
-    // Resetear estadísticas de un PIN
-    async function resetearEstadisticas(pin) {
-      if (!confirm(`¿Resetear todos los contadores del PIN ${pin}?`)) return;
-      
-      try {
-        await db.collection('estadisticas_pins').doc(pin).set({
-          ciclosCompletos: 0,
-          totalEntradas: 0,
-          totalSalidas: 0,
-          ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        alert(`✅ Contadores del PIN ${pin} reseteados.`);
-        cargarEstadisticas();
-      } catch (err) {
-        console.error("Error al resetear:", err);
-        alert("❌ Error al resetear contadores.");
-      }
-    }
-
-    // Actualizar hora de reset automático
-    async function actualizarResetHora(pin, hora) {
-      try {
-        await db.collection('pines_acceso').doc(pin).update({
-          resetHora: hora
-        });
-        console.log(`✅ Hora de reset actualizada para PIN ${pin}: ${hora}`);
-      } catch (err) {
-        console.error("❌ Error al actualizar hora de reset:", err);
-        alert("Error al guardar la configuración.");
-      }
-    }
-
-    window.resetearEstadisticas = resetearEstadisticas;
-    window.actualizarResetHora = actualizarResetHora;
-    window.mostrarDetalleVehiculo = mostrarDetalleVehiculo;
-    window.toggleVehiculo = toggleVehiculo;
-    window.eliminarVehiculo = eliminarVehiculo;
-
-    // --- PESTAÑAS ---
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        const tab = btn.dataset.tab;
-        document.getElementById('tab-registros').classList.toggle('hidden', tab !== 'registros');
-        document.getElementById('tab-trabajadores').classList.toggle('hidden', tab !== 'trabajadores');
-        document.getElementById('tab-pines').classList.toggle('hidden', tab !== 'pines');
-        document.getElementById('tab-vehiculos').classList.toggle('hidden', tab !== 'vehiculos');
-        document.getElementById('tab-estadisticas').classList.toggle('hidden', tab !== 'estadisticas');
-        
-        if (tab === 'trabajadores') cargarTrabajadores();
-        if (tab === 'pines') cargarPinesAcceso();
-        if (tab === 'vehiculos') cargarVehiculos();
-        if (tab === 'estadisticas') {
-          document.getElementById('contenedores-estadisticas').innerHTML = 
-            '<p>Presiona "Cargar contadores" para ver las estadísticas.</p>';
-        }
-      });
-    });
-
-    // --- AUTENTICACIÓN ---
-    document.getElementById('btn-login').addEventListener('click', async () => {
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      const msg = document.getElementById('msg-login');
-      if (!email || !password) {
-        msg.textContent = 'Introduce email y contraseña';
-        msg.className = 'error';
-        return;
-      }
-      try {
-        await auth.signInWithEmailAndPassword(email, password);
-      } catch (err) {
-        msg.textContent = 'Error: ' + err.message;
-        msg.className = 'error';
-      }
-    });
-
-    document.getElementById('logout').addEventListener('click', () => auth.signOut());
-
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        loginDiv.classList.add('hidden');
-        datosDiv.classList.remove('hidden');
-        userEmailSpan.textContent = user.email;
-        cargarRegistros();
-      } else {
-        loginDiv.classList.remove('hidden');
-        datosDiv.classList.add('hidden');
-      }
-    });
-
-    // --- BOTONES ---
-    document.getElementById('cargar').addEventListener('click', cargarRegistros);
-    document.getElementById('borrar-registros').addEventListener('click', borrarTodosRegistros);
-    document.getElementById('exportar').addEventListener('click', () => {
-      if (window.datosExportar?.length) exportarExcel(window.datosExportar);
-      else alert('No hay datos para exportar.');
-    });
-    
-    // Botones vehículos
-    document.getElementById('cargar-vehiculos-detalle').addEventListener('click', cargarRegistrosVehiculos);
-    document.getElementById('borrar-registros-vehiculos-detalle').addEventListener('click', borrarTodosRegistrosVehiculos);
-    document.getElementById('exportar-vehiculos-detalle').addEventListener('click', () => {
-      if (DATOS_VEHICULOS?.length) exportarVehiculosExcel(DATOS_VEHICULOS);
-      else alert('No hay datos de vehículos para exportar.');
-    });
-    
-    document.getElementById('btn-agregar').addEventListener('click', agregarTrabajador);
-    document.getElementById('btn-agregar-vehiculo').addEventListener('click', agregarVehiculo);
-    document.getElementById('btn-generar-pin').addEventListener('click', generarPINUnico);
-    document.getElementById('orden-trabajadores').addEventListener('change', cargarTrabajadores);
-    document.getElementById('generar-pin').addEventListener('click', generarPIN);
-    document.getElementById('borrar-todos-pins').addEventListener('click', borrarTodosPins);
-    document.getElementById('generar-url').addEventListener('click', generarURLAcceso);
-    document.getElementById('copiar-url-vehiculo').addEventListener('click', copiarUrlVehiculo);
-    document.getElementById('cargar-contadores').addEventListener('click', cargarEstadisticas);
-
-    // Fallback para logo
-    document.getElementById('logo').onerror = function() {
-      this.classList.add('fallback');
-      this.textContent = 'LC';
-    };
-  </script>
+const firebaseConfig = {
+apiKey: "AIzaSyACVAm_3qDdghFNixYIYF6ToYOf_dIVodE",
+authDomain: "control-horario-obra.firebaseapp.com",
+projectId: "control-horario-obra",
+storageBucket: "control-horario-obra.firebasestorage.app",
+messagingSenderId: "566402636945",
+appId: "1:566402636945:web:7a8fa39c373ae62a49b330"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const loginDiv = document.getElementById('login');
+const datosDiv = document.getElementById('datos');
+const userEmailSpan = document.getElementById('user-email');
+// Formatear fecha
+function formatearFecha(fecha) {
+if (fecha?.toDate) fecha = fecha.toDate();
+return new Intl.DateTimeFormat('es-ES', {
+year: '2-digit',
+month: '2-digit',
+day: '2-digit',
+hour: '2-digit',
+minute: '2-digit'
+}).format(fecha);
+}
+// Función para convertir milisegundos a HH:MM
+function msToHHMM(ms) {
+const totalMinutos = Math.floor(ms / (1000 * 60));
+const horas = Math.floor(totalMinutos / 60);
+const minutos = totalMinutos % 60;
+return `${horas}:${minutos.toString().padStart(2, '0')}`;
+}
+// --- EXPORTAR A EXCEL MEJORADO ---
+async function exportarExcel(datos) {
+if (!window.XLSX) {
+const script = document.createElement('script');
+script.src = 'https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js';
+script.onload = () => exportarConSheetJS(datos);
+script.onerror = () => alert('❌ No se pudo cargar la librería de Excel.');
+document.head.appendChild(script);
+} else {
+exportarConSheetJS(datos);
+}
+}
+function exportarConSheetJS(datos) {
+const XLSX = window.XLSX;
+// Hoja 1: Todos los registros
+const registros = datos.map(r => ({
+Nombre: r.nombre,
+Tipo: r.tipo,
+'Fecha y Hora': formatearFecha(r.fechaHora),
+Comentario: r.comentario || '-'
+}));
+const wb = XLSX.utils.book_new();
+const ws1 = XLSX.utils.json_to_sheet(registros);
+XLSX.utils.book_append_sheet(wb, ws1, "Registros");
+// Agrupar por obra/comentario
+const obras = {};
+datos.forEach(r => {
+const obra = r.comentario || 'Sin obra';
+if (!obras[obra]) obras[obra] = [];
+obras[obra].push({
+Nombre: r.nombre,
+Tipo: r.tipo,
+'Fecha y Hora': formatearFecha(r.fechaHora)
+});
+});
+// Crear hojas por obra
+Object.keys(obras).forEach(obra => {
+// Limpiar nombre de hoja (máximo 31 caracteres, sin caracteres inválidos)
+let nombreHoja = obra.substring(0, 31).replace(/[/\\?*[\]:]/g, '_');
+if (nombreHoja === '') nombreHoja = 'Sin_nombre';
+// Evitar nombres duplicados
+let contador = 1;
+let nombreFinal = nombreHoja;
+while (wb.SheetNames.includes(nombreFinal)) {
+nombreFinal = nombreHoja.substring(0, 28) + '_' + contador;
+contador++;
+}
+const wsObra = XLSX.utils.json_to_sheet(obras[obra]);
+XLSX.utils.book_append_sheet(wb, wsObra, nombreFinal);
+});
+// Hoja: Cómputo de horas
+const trabajadores = {};
+datos.forEach(r => {
+if (!trabajadores[r.nombre]) trabajadores[r.nombre] = [];
+const fecha = r.fechaHora.toDate ? r.fechaHora.toDate() : new Date(r.fechaHora);
+trabajadores[r.nombre].push({ tipo: r.tipo, fecha: fecha, comentario: r.comentario || 'Sin obra' });
+});
+const computo = [];
+for (const nombre in trabajadores) {
+const eventos = trabajadores[nombre].sort((a, b) => a.fecha - b.fecha);
+let totalMs = 0;
+let ultimaEntrada = null;
+for (const ev of eventos) {
+if (ev.tipo === 'entrada') {
+ultimaEntrada = ev.fecha;
+} else if (ev.tipo === 'salida' && ultimaEntrada) {
+totalMs += ev.fecha - ultimaEntrada;
+ultimaEntrada = null;
+}
+}
+if (totalMs > 0) {
+computo.push({
+Nombre: nombre,
+'Horas (HH:MM)': msToHHMM(totalMs),
+'Obras': [...new Set(trabajadores[nombre].map(e => e.comentario))].join(', ')
+});
+}
+}
+const ws2 = XLSX.utils.json_to_sheet(computo);
+XLSX.utils.book_append_sheet(wb, ws2, "Cómputo horas");
+// Guardar archivo
+XLSX.writeFile(wb, "registros_horario.xlsx");
+}
+// --- EXPORTAR VEHÍCULOS A EXCEL ---
+async function exportarVehiculosExcel(datos) {
+if (!window.XLSX) {
+const script = document.createElement('script');
+script.src = 'https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js';
+script.onload = () => exportarVehiculosConSheetJS(datos);
+script.onerror = () => alert('❌ No se pudo cargar la librería de Excel.');
+document.head.appendChild(script);
+} else {
+exportarVehiculosConSheetJS(datos);
+}
+}
+async function exportarVehiculosConSheetJS(datos) {
+const XLSX = window.XLSX;
+// Hoja 1: Todos los registros
+const registros = datos.map(r => ({
+'Matrícula': r.matricula,
+'Modelo': r.modelo,
+'Conductor': r.nombreConductor,
+'Fecha y Hora': formatearFecha(r.fechaHora)
+}));
+const wb = XLSX.utils.book_new();
+const ws1 = XLSX.utils.json_to_sheet(registros);
+XLSX.utils.book_append_sheet(wb, ws1, "Todos los usos");
+// Agrupar por vehículo
+const vehiculos = {};
+datos.forEach(r => {
+const vehiculo = `${r.matricula} - ${r.modelo}`;
+if (!vehiculos[vehiculo]) vehiculos[vehiculo] = [];
+vehiculos[vehiculo].push({
+'Conductor': r.nombreConductor,
+'Fecha y Hora': formatearFecha(r.fechaHora)
+});
+});
+// Crear hojas por vehículo
+Object.keys(vehiculos).forEach(vehiculo => {
+// Limpiar nombre de hoja (máximo 31 caracteres)
+let nombreHoja = vehiculo.substring(0, 31).replace(/[/\\?*[\]:]/g, '_');
+if (nombreHoja === '') nombreHoja = 'Vehiculo_Sin_Nombre';
+// Evitar nombres duplicados
+let contador = 1;
+let nombreFinal = nombreHoja;
+while (wb.SheetNames.includes(nombreFinal)) {
+nombreFinal = nombreHoja.substring(0, 28) + '_' + contador;
+contador++;
+}
+const wsVehiculo = XLSX.utils.json_to_sheet(vehiculos[vehiculo]);
+XLSX.utils.book_append_sheet(wb, wsVehiculo, nombreFinal);
+});
+// Guardar archivo
+XLSX.writeFile(wb, "uso_vehiculos.xlsx");
+}
+// --- REGISTROS ---
+async function cargarRegistros() {
+const cuerpo = document.getElementById('tabla-cuerpo');
+cuerpo.innerHTML = '<tr><td colspan="4">Cargando...</td></tr>';
+try {
+const snapshot = await db.collection('registros_publicos')
+.orderBy('fechaHora', 'desc')
+.limit(500)
+.get();
+const filas = [];
+const datos = [];
+snapshot.forEach(doc => {
+const r = doc.data();
+datos.push(r);
+const comentario = r.comentario || '-';
+filas.push(`<tr><td>${r.nombre}</td><td>${r.tipo}</td><td>${formatearFecha(r.fechaHora)}</td><td>${comentario}</td></tr>`);
+});
+cuerpo.innerHTML = filas.join('');
+window.datosExportar = datos;
+} catch (err) {
+cuerpo.innerHTML = '<tr><td colspan="4">Error al cargar</td></tr>';
+console.error(err);
+}
+}
+async function borrarTodosRegistros() {
+if (!confirm("⚠️ ¿Estás seguro? Esto borrará TODOS los registros de jornada.")) return;
+if (!confirm("🔴 ¡CONFIRMACIÓN FINAL! ¿Borrar todos los registros?")) return;
+try {
+const snapshot = await db.collection('registros_publicos').get();
+const batch = db.batch();
+snapshot.docs.forEach(doc => batch.delete(doc.ref));
+await batch.commit();
+alert('✅ Todos los registros han sido eliminados.');
+cargarRegistros();
+} catch (err) {
+alert('❌ Error al borrar: ' + err.message);
+console.error(err);
+}
+}
+// --- REGISTROS VEHÍCULOS ---
+let DATOS_VEHICULOS = [];
+async function cargarRegistrosVehiculos() {
+const contenedor = document.getElementById('usos-vehiculo');
+contenedor.innerHTML = '<p>Cargando registros...</p>';
+try {
+const snapshot = await db.collection('uso_vehiculos')
+.orderBy('fechaHora', 'desc')
+.limit(100)
+.get();
+const datos = [];
+snapshot.forEach(doc => {
+const r = doc.data();
+datos.push(r);
+});
+DATOS_VEHICULOS = datos;
+// Actualizar vista si hay vehículo seleccionado
+const vehiculoActual = document.getElementById('vehiculo-actual').textContent;
+if (vehiculoActual) {
+actualizarUsosVehiculo();
+}
+} catch (err) {
+contenedor.innerHTML = '<p>Error al cargar registros</p>';
+console.error(err);
+}
+}
+async function borrarTodosRegistrosVehiculos() {
+if (!confirm("⚠️ ¿Estás seguro? Esto borrará TODOS los registros de uso de vehículos.")) return;
+if (!confirm("🔴 ¡CONFIRMACIÓN FINAL! ¿Borrar todos los registros de vehículos?")) return;
+try {
+const snapshot = await db.collection('uso_vehiculos').get();
+const batch = db.batch();
+snapshot.docs.forEach(doc => batch.delete(doc.ref));
+await batch.commit();
+alert('✅ Todos los registros de vehículos han sido eliminados.');
+cargarRegistrosVehiculos();
+actualizarUsosVehiculo();
+} catch (err) {
+alert('❌ Error al borrar: ' + err.message);
+console.error(err);
+}
+}
+function actualizarUsosVehiculo() {
+const contenedor = document.getElementById('usos-vehiculo');
+const vehiculoId = document.getElementById('url-vehiculo').value.split('vehiculo=')[1];
+if (!vehiculoId) {
+contenedor.innerHTML = '<p>Selecciona un vehículo</p>';
+return;
+}
+const registrosVehiculo = DATOS_VEHICULOS.filter(r => r.vehiculoId === vehiculoId);
+if (registrosVehiculo.length === 0) {
+contenedor.innerHTML = '<p>No hay registros de uso</p>';
+} else {
+let html = `
+<table style="width:100%; border-collapse: collapse; margin-top: 10px;">
+<thead>
+<tr>
+<th>Matrícula</th>
+<th>Modelo</th>
+<th>Conductor</th>
+<th>Fecha/Hora</th>
+</tr>
+</thead>
+<tbody>
+`;
+registrosVehiculo.slice(0, 10).forEach(r => {
+html += `
+<tr>
+<td>${r.matricula || '-'}</td>
+<td>${r.modelo || '-'}</td>
+<td>${r.nombreConductor}</td>
+<td>${formatearFecha(r.fechaHora)}</td>
+</tr>
+`;
+});
+html += '</tbody></table>';
+contenedor.innerHTML = html;
+}
+}
+// --- TRABAJADORES ---
+async function cargarTrabajadores() {
+const cuerpo = document.getElementById('cuerpo-trabajadores');
+cuerpo.innerHTML = '<tr><td colspan="3">Cargando...</td></tr>';
+try {
+const snapshot = await db.collection('trabajadores').get();
+const lista = [];
+snapshot.forEach(doc => {
+const data = doc.data();
+lista.push({
+id: doc.id,
+pin: data.pin,
+nombre: data.nombre,
+fechaRegistro: data.fechaRegistro
+});
+});
+const criterio = document.getElementById('orden-trabajadores').value;
+if (criterio === 'pin') {
+lista.sort((a, b) => parseInt(a.pin) - parseInt(b.pin));
+} else if (criterio === 'nombre') {
+lista.sort((a, b) => a.nombre.localeCompare(b.nombre));
+} else if (criterio === 'registro') {
+lista.sort((a, b) => {
+const fechaA = a.fechaRegistro?.toDate ? a.fechaRegistro.toDate().getTime() : 0;
+const fechaB = b.fechaRegistro?.toDate ? b.fechaRegistro.toDate().getTime() : 0;
+return fechaB - fechaA;
+});
+}
+const filas = lista.map(t => `
+<tr>
+<td>${t.pin}</td>
+<td>${t.nombre}</td>
+<td>
+<button onclick="editarTrabajador('${t.id}', '${t.pin.replace(/'/g, "\\'")}', '${t.nombre.replace(/'/g, "\\'")}')" style="margin-right:5px;">✏️</button>
+<button onclick="eliminarTrabajador('${t.id}')">🗑️</button>
+</td>
+</tr>
+`);
+window.listaTrabajadores = {};
+lista.forEach(t => {
+window.listaTrabajadores[t.id] = t;
+});
+cuerpo.innerHTML = filas.join('');
+} catch (err) {
+cuerpo.innerHTML = '<tr><td colspan="3">Error</td></tr>';
+console.error(err);
+}
+}
+// Generar PIN aleatorio único
+function generarPINUnico() {
+const pinInput = document.getElementById('nuevo-pin');
+const pinesExistentes = new Set();
+if (window.listaTrabajadores) {
+Object.values(window.listaTrabajadores).forEach(t => {
+pinesExistentes.add(t.pin);
+});
+}
+let intentos = 0;
+const maxIntentos = 100;
+let pin;
+do {
+pin = Math.floor(1000 + Math.random() * 9000).toString();
+intentos++;
+} while (pinesExistentes.has(pin) && intentos < maxIntentos);
+if (intentos >= maxIntentos) {
+alert("⚠️ No se pudo generar un PIN único.");
+return;
+}
+pinInput.value = pin;
+document.getElementById('msg-trabajadores').textContent = `✅ PIN generado: ${pin}`;
+document.getElementById('msg-trabajadores').className = 'success';
+}
+async function agregarTrabajador() {
+const pin = document.getElementById('nuevo-pin').value.trim();
+const nombre = document.getElementById('nuevo-nombre').value.trim();
+const msg = document.getElementById('msg-trabajadores');
+if (!pin || !nombre || pin.length !== 4 || isNaN(pin)) {
+msg.textContent = '⚠️ PIN debe ser 4 dígitos y nombre obligatorio.';
+msg.className = 'error';
+return;
+}
+const yaExiste = Object.values(window.listaTrabajadores || {}).some(t =>
+t.pin === pin || t.nombre === nombre
+);
+if (yaExiste) {
+msg.textContent = '❌ PIN o nombre ya existen.';
+msg.className = 'error';
+return;
+}
+try {
+await db.collection('trabajadores').add({
+pin,
+nombre,
+fechaRegistro: firebase.firestore.FieldValue.serverTimestamp()
+});
+msg.textContent = '✅ Trabajador añadido.';
+msg.className = 'success';
+document.getElementById('nuevo-pin').value = '';
+document.getElementById('nuevo-nombre').value = '';
+cargarTrabajadores();
+} catch (err) {
+msg.textContent = '❌ Error: ' + err.message;
+msg.className = 'error';
+console.error(err);
+}
+}
+// Funciones globales
+window.eliminarTrabajador = async (id) => {
+if (!confirm('¿Eliminar este trabajador?')) return;
+try {
+await db.collection('trabajadores').doc(id).delete();
+cargarTrabajadores();
+} catch (err) {
+alert('Error al eliminar.');
+console.error(err);
+}
+};
+window.editarTrabajador = (id, pin, nombre) => {
+const nuevoPin = prompt("Editar PIN (4 dígitos):", pin);
+const nuevoNombre = prompt("Editar nombre:", nombre);
+if (nuevoPin === null || nuevoNombre === null) return;
+if (!nuevoPin || !nuevoNombre || nuevoPin.length !== 4 || isNaN(nuevoPin)) {
+alert("⚠️ PIN debe ser 4 dígitos.");
+return;
+}
+const duplicado = Object.values(window.listaTrabajadores || {}).some(t =>
+t.id !== id && (t.pin === nuevoPin || t.nombre === nuevoNombre)
+);
+if (duplicado) {
+alert("❌ PIN o nombre ya existen.");
+return;
+}
+db.collection('trabajadores').doc(id).update({ pin: nuevoPin, nombre: nuevoNombre })
+.then(() => {
+alert("✅ Trabajador actualizado.");
+cargarTrabajadores();
+})
+.catch(err => {
+alert("❌ Error: " + err.message);
+});
+};
+// --- PIN DE ACCESO ---
+async function guardarPIN(pin, activo, comentario) {
+try {
+await db.collection('pines_acceso').doc(pin).set({
+pin: pin,
+activo: activo,
+comentario: comentario || '',
+resetHora: 'off', // ✅ Por defecto OFF (no 00:00)
+timestamp: firebase.firestore.FieldValue.serverTimestamp()
+});
+document.getElementById('comentario-pin').value = '';
+document.getElementById('url-acceso').value = `https://erwoo11.github.io/controlhorario/registro.html?pin=${pin}`;
+document.getElementById('msg-pin').textContent = '✅ PIN guardado';
+document.getElementById('msg-pin').className = 'success';
+cargarPinesAcceso();
+} catch (err) {
+console.error("Error al guardar PIN:", err);
+document.getElementById('msg-pin').textContent = '❌ Error: ' + err.message;
+document.getElementById('msg-pin').className = 'error';
+}
+}
+// ✅ GENERAR PIN CON COMENTARIO OBLIGATORIO
+async function generarPIN() {
+const comentarioInput = document.getElementById('comentario-pin');
+const comentario = comentarioInput.value.trim();
+// Quitar clase de error si existía
+comentarioInput.classList.remove('error');
+if (!comentario) {
+comentarioInput.classList.add('error');
+alert("⚠️ El comentario es obligatorio. Por ejemplo: 'Obra Norte', 'Turno mañana', etc.");
+comentarioInput.focus();
+return;
+}
+const pin = Math.floor(1000 + Math.random() * 9000).toString();
+await guardarPIN(pin, true, comentario);
+}
+async function cargarPinesAcceso() {
+try {
+const snapshot = await db.collection('pines_acceso')
+.orderBy('timestamp', 'desc')
+.get();
+const tbody = document.getElementById('cuerpo-pines');
+if (snapshot.empty) {
+tbody.innerHTML = '<tr><td colspan="5">No hay PINs creados</td></tr>';
+return;
+}
+let filas = '';
+snapshot.forEach(doc => {
+const data = doc.data();
+const fecha = data.timestamp?.toDate ?
+new Intl.DateTimeFormat('es-ES', {
+year: '2-digit', month: '2-digit', day: '2-digit',
+hour: '2-digit', minute: '2-digit'
+}).format(data.timestamp.toDate()) : 'Sin fecha';
+filas += `
+<tr>
+<td><strong>${data.pin}</strong></td>
+<td>${fecha}</td>
+<td>${data.comentario || '-'}</td>
+<td>
+<label style="display: flex; align-items: center; gap: 5px;">
+<input type="checkbox"
+class="toggle-pin-individual"
+data-pin="${data.pin}"
+${data.activo ? 'checked' : ''} />
+${data.activo ? '✅ Activo' : '❌ Inactivo'}
+</label>
+</td>
+<td>
+<button class="btn-usar-pin" data-pin="${data.pin}" data-comentario="${data.comentario || ''}">
+Usar
+</button>
+</td>
+</tr>
+`;
+});
+tbody.innerHTML = filas;
+// Eventos checkboxes individuales
+document.querySelectorAll('.toggle-pin-individual').forEach(checkbox => {
+checkbox.addEventListener('change', async (e) => {
+const pin = e.target.dataset.pin;
+const activo = e.target.checked;
+const docRef = db.collection('pines_acceso').doc(pin);
+const docSnap = await docRef.get();
+const comentario = docSnap.exists ? docSnap.data().comentario : '';
+await docRef.update({
+activo: activo,
+timestamp: firebase.firestore.FieldValue.serverTimestamp()
+});
+cargarPinesAcceso();
+});
+});
+// Eventos "Usar"
+document.querySelectorAll('.btn-usar-pin').forEach(btn => {
+btn.addEventListener('click', (e) => {
+const pin = e.target.dataset.pin;
+const comentario = e.target.dataset.comentario;
+document.getElementById('comentario-pin').value = comentario;
+document.getElementById('url-acceso').value = `https://erwoo11.github.io/controlhorario/registro.html?pin=${pin}`;
+});
+});
+} catch (err) {
+console.error("Error al cargar PINs:", err);
+document.getElementById('cuerpo-pines').innerHTML =
+'<tr><td colspan="5">Error al cargar</td></tr>';
+}
+}
+// --- VEHÍCULOS ---
+async function cargarVehiculos() {
+try {
+const snapshot = await db.collection('vehiculos').get();
+const tbody = document.getElementById('cuerpo-vehiculos');
+if (snapshot.empty) {
+tbody.innerHTML = '<tr><td colspan="4">No hay vehículos registrados</td></tr>';
+return;
+}
+let filas = '';
+snapshot.forEach(doc => {
+const data = doc.data();
+const estado = data.activo ? '✅ Activo' : '❌ Inactivo';
+filas += `
+<tr>
+<td><strong>${data.matricula}</strong></td>
+<td>${data.modelo}</td>
+<td>${estado}</td>
+<td>
+<button onclick="mostrarDetalleVehiculo('${doc.id}', '${data.matricula}', '${data.modelo}')" style="margin-right: 5px; background: #3498db;">📋</button>
+<button onclick="toggleVehiculo('${doc.id}', ${data.activo})" style="background: ${data.activo ? '#e74c3c' : '#2ecc71'}; margin-right: 5px;">
+${data.activo ? '❌' : '✅'}
+</button>
+<button onclick="eliminarVehiculo('${doc.id}', '${data.matricula}')" style="background: #e74c3c;">
+🗑️
+</button>
+</td>
+</tr>
+`;
+});
+tbody.innerHTML = filas;
+cargarRegistrosVehiculos(); // Cargar registros para mostrar en detalle
+} catch (err) {
+console.error("Error al cargar vehículos:", err);
+document.getElementById('cuerpo-vehiculos').innerHTML = '<tr><td colspan="4">Error al cargar</td></tr>';
+}
+}
+async function agregarVehiculo() {
+const matricula = document.getElementById('matricula-vehiculo').value.trim().toUpperCase();
+const modelo = document.getElementById('modelo-vehiculo').value.trim();
+if (!matricula || !modelo) {
+alert("⚠️ Matrícula y modelo son obligatorios");
+return;
+}
+// Validar formato de matrícula (opcional)
+if (matricula.length < 5 || matricula.length > 8) {
+alert("⚠️ Formato de matrícula no válido");
+return;
+}
+try {
+await db.collection('vehiculos').add({
+matricula: matricula,
+modelo: modelo,
+activo: true,
+timestamp: firebase.firestore.FieldValue.serverTimestamp()
+});
+alert("✅ Vehículo añadido correctamente");
+document.getElementById('matricula-vehiculo').value = '';
+document.getElementById('modelo-vehiculo').value = '';
+cargarVehiculos();
+} catch (err) {
+console.error("Error al añadir vehículo:", err);
+alert("❌ Error al añadir vehículo");
+}
+}
+async function toggleVehiculo(id, estadoActual) {
+try {
+await db.collection('vehiculos').doc(id).update({
+activo: !estadoActual
+});
+cargarVehiculos();
+} catch (err) {
+console.error("Error al cambiar estado:", err);
+}
+}
+// Eliminar vehículo
+async function eliminarVehiculo(id, matricula) {
+if (!confirm(`⚠️ ¿Estás seguro de que quieres ELIMINAR el vehículo ${matricula}?`)) return;
+if (!confirm("🔴 ¡CONFIRMACIÓN FINAL! Esta acción es irreversible.")) return;
+try {
+// Eliminar el vehículo
+await db.collection('vehiculos').doc(id).delete();
+// Eliminar también los registros de uso de este vehículo
+const registrosSnapshot = await db.collection('uso_vehiculos')
+.where('vehiculoId', '==', id)
+.get();
+if (!registrosSnapshot.empty) {
+const batch = db.batch();
+registrosSnapshot.docs.forEach(doc => batch.delete(doc.ref));
+await batch.commit();
+}
+alert(`✅ Vehículo ${matricula} eliminado correctamente.`);
+cargarVehiculos();
+// Ocultar detalle si era el vehículo eliminado
+const vehiculoActual = document.getElementById('url-vehiculo').value.split('vehiculo=')[1];
+if (vehiculoActual === id) {
+document.getElementById('detalle-vehiculo').style.display = 'none';
+}
+} catch (err) {
+console.error("Error al eliminar vehículo:", err);
+alert("❌ Error al eliminar el vehículo.");
+}
+}
+async function mostrarDetalleVehiculo(id, matricula, modelo) {
+document.getElementById('vehiculo-actual').textContent = `${matricula} (${modelo})`;
+document.getElementById('url-vehiculo').value = `https://erwoo11.github.io/controlhorario/vehiculo.html?vehiculo=${id}`;
+document.getElementById('detalle-vehiculo').style.display = 'block';
+// Forzar actualización de usos
+setTimeout(() => {
+actualizarUsosVehiculo();
+}, 100);
+}
+function copiarUrlVehiculo() {
+const url = document.getElementById('url-vehiculo').value;
+if (!url) return;
+navigator.clipboard.writeText(url).then(() => {
+alert("✅ Enlace copiado al portapapeles");
+}).catch(err => {
+console.warn("No se pudo copiar:", err);
+const textArea = document.createElement("textarea");
+textArea.value = url;
+document.body.appendChild(textArea);
+textArea.select();
+document.execCommand("copy");
+document.body.removeChild(textArea);
+alert("✅ Enlace copiado (método alternativo)");
+});
+}
+// Borrar todos los PINs y sus estadísticas
+async function borrarTodosPins() {
+if (!confirm("⚠️ ¿Estás seguro de que quieres BORRAR TODOS los PINs de acceso y sus estadísticas?")) return;
+const respuesta = prompt("Escribe 'BORRAR TODO' para confirmar:");
+if (respuesta !== "BORRAR TODO") {
+alert("Operación cancelada.");
+return;
+}
+try {
+// Obtener todos los PINs de acceso
+const pinesSnapshot = await db.collection('pines_acceso').get();
+// Crear batch para borrar PINs de acceso
+const batchPines = db.batch();
+pinesSnapshot.docs.forEach(doc => batchPines.delete(doc.ref));
+await batchPines.commit();
+// Crear batch para borrar estadísticas
+const batchStats = db.batch();
+pinesSnapshot.docs.forEach(doc => {
+const pin = doc.data().pin;
+if (pin) {
+batchStats.delete(db.collection('estadisticas_pins').doc(pin));
+}
+});
+await batchStats.commit();
+document.getElementById('comentario-pin').value = '';
+document.getElementById('url-acceso').value = '';
+alert("✅ Todos los PINs y sus estadísticas han sido eliminados.");
+cargarPinesAcceso();
+} catch (err) {
+console.error("Error al borrar PINs y estadísticas:", err);
+alert("❌ Error al borrar: " + err.message);
+}
+}
+// Generar y copiar URL
+function generarURLAcceso() {
+const url = document.getElementById('url-acceso').value;
+if (!url || !url.includes('?pin=')) {
+alert("Genera un PIN primero");
+return;
+}
+navigator.clipboard.writeText(url).then(() => {
+alert("✅ Enlace copiado al portapapeles");
+}).catch(err => {
+console.warn("No se pudo copiar:", err);
+const textArea = document.createElement("textarea");
+textArea.value = url;
+document.body.appendChild(textArea);
+textArea.select();
+document.execCommand("copy");
+document.body.removeChild(textArea);
+alert("✅ Enlace copiado (método alternativo)");
+});
+}
+// --- ESTADÍSTICAS ---
+async function cargarEstadisticas() {
+try {
+const pinesSnapshot = await db.collection('pines_acceso').get();
+const contenedor = document.getElementById('contenedores-estadisticas');
+if (pinesSnapshot.empty) {
+contenedor.innerHTML = '<p>No hay PINs creados aún.</p>';
+return;
+}
+let html = '';
+let hayDatos = false;
+for (const pinDoc of pinesSnapshot.docs) {
+const pinData = pinDoc.data();
+const pin = pinData.pin;
+// Obtener configuración de reset (¡incluye OFF!)
+const resetHora = pinData.resetHora || 'off';
+const statsRef = db.collection('estadisticas_pins').doc(pin);
+const statsSnap = await statsRef.get();
+let ciclosCompletos = 0, totalEntradas = 0, totalSalidas = 0;
+if (statsSnap.exists) {
+const data = statsSnap.data();
+ciclosCompletos = data.ciclosCompletos || 0;
+totalEntradas = data.totalEntradas || 0;
+totalSalidas = data.totalSalidas || 0;
+hayDatos = true;
+}
+html += `
+<div style="background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 8px;">
+<h4>PIN: ${pin} ${pinData.comentario ? `(${pinData.comentario})` : ''}</h4>
+<!-- Contador global (grande y destacado) -->
+<div style="text-align: center; margin: 15px 0;">
+<div style="font-size: 32px; font-weight: bold; color: #2c3e50;">${ciclosCompletos}</div>
+<div style="color: #7f8c8d;">Personas que han entrado y salido</div>
+</div>
+<!-- Contadores secundarios -->
+<div style="display: flex; justify-content: space-around; margin: 10px 0; background: white; padding: 10px; border-radius: 6px;">
+<div style="text-align: center;">
+<div style="font-size: 18px; color: #2ecc71; font-weight: bold;">${totalEntradas}</div>
+<div>Entradas</div>
+</div>
+<div style="text-align: center;">
+<div style="font-size: 18px; color: #e74c3c; font-weight: bold;">${totalSalidas}</div>
+<div>Salidas</div>
+</div>
+</div>
+<!-- ✅ Configuración de reset automático MEJORADA -->
+<div class="reset-controls">
+<label style="display: block; margin-bottom: 8px; font-weight: bold; color: #2c3e50;">
+🕒 Reset automático de contadores:
+</label>
+<div class="reset-options">
+<label class="reset-option">
+<input type="radio"
+name="reset-hora-${pin}"
+value="off"
+${resetHora === 'off' ? 'checked' : ''}
+onchange="actualizarResetHora('${pin}', 'off')" />
+OFF
+</label>
+<label class="reset-option">
+<input type="radio"
+name="reset-hora-${pin}"
+value="00:00"
+${resetHora === '00:00' ? 'checked' : ''}
+onchange="actualizarResetHora('${pin}', '00:00')" />
+00:00
+</label>
+<label class="reset-option">
+<input type="radio"
+name="reset-hora-${pin}"
+value="12:00"
+${resetHora === '12:00' ? 'checked' : ''}
+onchange="actualizarResetHora('${pin}', '12:00')" />
+12:00
+</label>
+</div>
+</div>
+<button onclick="resetearEstadisticas('${pin}')"
+style="background: #e74c3c; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px;">
+🗑️ Resetear contadores
+</button>
+</div>
+`;
+}
+if (!hayDatos) {
+contenedor.innerHTML = '<p>No hay registros de estadísticas aún.</p>' + html;
+} else {
+contenedor.innerHTML = html;
+}
+} catch (err) {
+console.error("Error al cargar estadísticas:", err);
+document.getElementById('contenedores-estadisticas').innerHTML =
+'<p style="color: #e74c3c;">❌ Error al cargar estadísticas. Revisa la consola.</p>';
+}
+}
+// Resetear estadísticas de un PIN
+async function resetearEstadisticas(pin) {
+if (!confirm(`¿Resetear todos los contadores del PIN ${pin}?`)) return;
+try {
+await db.collection('estadisticas_pins').doc(pin).set({
+ciclosCompletos: 0,
+totalEntradas: 0,
+totalSalidas: 0,
+ultimaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
+});
+alert(`✅ Contadores del PIN ${pin} reseteados.`);
+cargarEstadisticas();
+} catch (err) {
+console.error("Error al resetear:", err);
+alert("❌ Error al resetear contadores.");
+}
+}
+// Actualizar hora de reset automático
+async function actualizarResetHora(pin, hora) {
+try {
+await db.collection('pines_acceso').doc(pin).update({
+resetHora: hora
+});
+console.log(`✅ Hora de reset actualizada para PIN ${pin}: ${hora}`);
+} catch (err) {
+console.error("❌ Error al actualizar hora de reset:", err);
+alert("Error al guardar la configuración.");
+}
+}
+window.resetearEstadisticas = resetearEstadisticas;
+window.actualizarResetHora = actualizarResetHora;
+window.mostrarDetalleVehiculo = mostrarDetalleVehiculo;
+window.toggleVehiculo = toggleVehiculo;
+window.eliminarVehiculo = eliminarVehiculo;
+// --- PESTAÑAS ---
+document.querySelectorAll('.tab-btn').forEach(btn => {
+btn.addEventListener('click', () => {
+document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+btn.classList.add('active');
+const tab = btn.dataset.tab;
+document.getElementById('tab-registros').classList.toggle('hidden', tab !== 'registros');
+document.getElementById('tab-trabajadores').classList.toggle('hidden', tab !== 'trabajadores');
+document.getElementById('tab-pines').classList.toggle('hidden', tab !== 'pines');
+document.getElementById('tab-vehiculos').classList.toggle('hidden', tab !== 'vehiculos');
+document.getElementById('tab-estadisticas').classList.toggle('hidden', tab !== 'estadisticas');
+if (tab === 'trabajadores') cargarTrabajadores();
+if (tab === 'pines') cargarPinesAcceso();
+if (tab === 'vehiculos') cargarVehiculos();
+if (tab === 'estadisticas') {
+document.getElementById('contenedores-estadisticas').innerHTML =
+'<p>Presiona "Cargar contadores" para ver las estadísticas.</p>';
+}
+});
+});
+// --- AUTENTICACIÓN ---
+document.getElementById('btn-login').addEventListener('click', async () => {
+const email = document.getElementById('email').value;
+const password = document.getElementById('password').value;
+const msg = document.getElementById('msg-login');
+if (!email || !password) {
+msg.textContent = 'Introduce email y contraseña';
+msg.className = 'error';
+return;
+}
+try {
+await auth.signInWithEmailAndPassword(email, password);
+} catch (err) {
+msg.textContent = 'Error: ' + err.message;
+msg.className = 'error';
+}
+});
+document.getElementById('logout').addEventListener('click', () => auth.signOut());
+auth.onAuthStateChanged(user => {
+if (user) {
+loginDiv.classList.add('hidden');
+datosDiv.classList.remove('hidden');
+userEmailSpan.textContent = user.email;
+cargarRegistros();
+} else {
+loginDiv.classList.remove('hidden');
+datosDiv.classList.add('hidden');
+}
+});
+// --- BOTONES ---
+document.getElementById('cargar').addEventListener('click', cargarRegistros);
+document.getElementById('borrar-registros').addEventListener('click', borrarTodosRegistros);
+document.getElementById('exportar').addEventListener('click', () => {
+if (window.datosExportar?.length) exportarExcel(window.datosExportar);
+else alert('No hay datos para exportar.');
+});
+// Botones vehículos
+document.getElementById('cargar-vehiculos-detalle').addEventListener('click', cargarRegistrosVehiculos);
+document.getElementById('borrar-registros-vehiculos-detalle').addEventListener('click', borrarTodosRegistrosVehiculos);
+document.getElementById('exportar-vehiculos-detalle').addEventListener('click', () => {
+if (DATOS_VEHICULOS?.length) exportarVehiculosExcel(DATOS_VEHICULOS);
+else alert('No hay datos de vehículos para exportar.');
+});
+document.getElementById('btn-agregar').addEventListener('click', agregarTrabajador);
+document.getElementById('btn-agregar-vehiculo').addEventListener('click', agregarVehiculo);
+document.getElementById('btn-generar-pin').addEventListener('click', generarPINUnico);
+document.getElementById('orden-trabajadores').addEventListener('change', cargarTrabajadores);
+document.getElementById('generar-pin').addEventListener('click', generarPIN);
+document.getElementById('borrar-todos-pins').addEventListener('click', borrarTodosPins);
+document.getElementById('generar-url').addEventListener('click', generarURLAcceso);
+document.getElementById('copiar-url-vehiculo').addEventListener('click', copiarUrlVehiculo);
+document.getElementById('cargar-contadores').addEventListener('click', cargarEstadisticas);
+// Fallback para logo
+document.getElementById('logo').onerror = function() {
+this.classList.add('fallback');
+this.textContent = 'LC';
+};
+</script>
 </body>
 </html>

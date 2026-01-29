@@ -7,6 +7,8 @@ const urlsToCache = [
   '/controlhorario/registro.html',
   '/controlhorario/vehiculo.html',
   '/controlhorario/logo.png',
+  '/controlhorario/logo-admin.png',
+  '/controlhorario/logo-admin-512.png',
   '/controlhorario/fondo.png',
   '/controlhorario/fondo-ondas.png',
   'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js',
