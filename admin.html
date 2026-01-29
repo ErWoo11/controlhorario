@@ -104,7 +104,7 @@
       background: #f2f2f2;
     }
 
-    #datos, #login, #gestion-trabajadores, #pines-acceso, #tab-estadisticas {
+    #datos, #login, #gestion-trabajadores, #pines-acceso, #tab-estadisticas, #tab-vehiculos {
       margin-top: 20px;
     }
 
@@ -193,6 +193,7 @@
           <button class="tab-btn active" data-tab="registros">📝 Registros</button>
           <button class="tab-btn" data-tab="trabajadores">👷 Gestión de Trabajadores</button>
           <button class="tab-btn" data-tab="pines">🔐 PINs de acceso</button>
+          <button class="tab-btn" data-tab="vehiculos">🚐 Flota Vehículos</button>
           <button class="tab-btn" data-tab="estadisticas">📊 Estadísticas</button>
         </div>
 
@@ -265,6 +266,48 @@
           <button id="borrar-todos-pins" class="btn-borrar-todo" style="margin-top: 15px;">
             🗑️ Borrar todos los PINs
           </button>
+        </div>
+
+        <!-- Vehículos -->
+        <div id="tab-vehiculos" class="hidden">
+          <h3>🚐 Flota Vehículos</h3>
+          
+          <input type="text" id="matricula-vehiculo" placeholder="Matrícula (ej: ABC123)" style="margin-bottom: 10px;" />
+          <input type="text" id="modelo-vehiculo" placeholder="Modelo (ej: Ford Transit)" style="margin-bottom: 10px;" />
+          <button id="btn-agregar-vehiculo" style="margin-bottom: 20px;">➕ Añadir vehículo</button>
+          
+          <h4>📋 Lista de vehículos</h4>
+          <table id="tabla-vehiculos">
+            <thead>
+              <tr>
+                <th>Matrícula</th>
+                <th>Modelo</th>
+                <th>Estado</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody id="cuerpo-vehiculos">
+              <tr><td colspan="4">Cargando vehículos...</td></tr>
+            </tbody>
+          </table>
+          
+          <div id="detalle-vehiculo" style="margin-top: 20px; display: none;">
+            <h4>🔗 Enlace de acceso para <span id="vehiculo-actual"></span></h4>
+            <input type="text" id="url-vehiculo" placeholder="URL se generará aquí" readonly style="margin-bottom: 10px;" />
+            <button id="copiar-url-vehiculo" style="background: #9b59b6; margin-bottom: 20px;">📋 Copiar enlace</button>
+            
+            <!-- ✅ BOTONES DE GESTIÓN REORGANIZADOS -->
+            <div style="display: flex; gap: 10px; margin-bottom: 20px; justify-content: center;">
+              <button id="cargar-vehiculos-detalle" style="background: #3498db; padding: 10px 15px; border-radius: 6px;">↻ Cargar registros</button>
+              <button id="borrar-registros-vehiculos-detalle" style="background: #e74c3c; padding: 10px 15px; border-radius: 6px;">🗑️ Borrar todos los registros</button>
+              <button id="exportar-vehiculos-detalle" style="background: #2ecc71; padding: 10px 15px; border-radius: 6px;">📥 Exportar a Excel</button>
+            </div>
+            
+            <h4>📋 Últimos usos</h4>
+            <div id="usos-vehiculo">
+              <p>Cargando registros...</p>
+            </div>
+          </div>
         </div>
 
         <!-- Estadísticas -->
@@ -423,6 +466,66 @@
       XLSX.writeFile(wb, "registros_horario.xlsx");
     }
 
+    // --- EXPORTAR VEHÍCULOS A EXCEL ---
+    async function exportarVehiculosExcel(datos) {
+      if (!window.XLSX) {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js';
+        script.onload = () => exportarVehiculosConSheetJS(datos);
+        script.onerror = () => alert('❌ No se pudo cargar la librería de Excel.');
+        document.head.appendChild(script);
+      } else {
+        exportarVehiculosConSheetJS(datos);
+      }
+    }
+
+    async function exportarVehiculosConSheetJS(datos) {
+      const XLSX = window.XLSX;
+      
+      // Hoja 1: Todos los registros
+      const registros = datos.map(r => ({
+        'Matrícula': r.matricula,
+        'Modelo': r.modelo,
+        'Conductor': r.nombreConductor,
+        'Fecha y Hora': formatearFecha(r.fechaHora)
+      }));
+      const wb = XLSX.utils.book_new();
+      const ws1 = XLSX.utils.json_to_sheet(registros);
+      XLSX.utils.book_append_sheet(wb, ws1, "Todos los usos");
+
+      // Agrupar por vehículo
+      const vehiculos = {};
+      datos.forEach(r => {
+        const vehiculo = `${r.matricula} - ${r.modelo}`;
+        if (!vehiculos[vehiculo]) vehiculos[vehiculo] = [];
+        vehiculos[vehiculo].push({
+          'Conductor': r.nombreConductor,
+          'Fecha y Hora': formatearFecha(r.fechaHora)
+        });
+      });
+
+      // Crear hojas por vehículo
+      Object.keys(vehiculos).forEach(vehiculo => {
+        // Limpiar nombre de hoja (máximo 31 caracteres)
+        let nombreHoja = vehiculo.substring(0, 31).replace(/[/\\?*[\]:]/g, '_');
+        if (nombreHoja === '') nombreHoja = 'Vehiculo_Sin_Nombre';
+        
+        // Evitar nombres duplicados
+        let contador = 1;
+        let nombreFinal = nombreHoja;
+        while (wb.SheetNames.includes(nombreFinal)) {
+          nombreFinal = nombreHoja.substring(0, 28) + '_' + contador;
+          contador++;
+        }
+        
+        const wsVehiculo = XLSX.utils.json_to_sheet(vehiculos[vehiculo]);
+        XLSX.utils.book_append_sheet(wb, wsVehiculo, nombreFinal);
+      });
+
+      // Guardar archivo
+      XLSX.writeFile(wb, "uso_vehiculos.xlsx");
+    }
+
     // --- REGISTROS ---
     async function cargarRegistros() {
       const cuerpo = document.getElementById('tabla-cuerpo');
@@ -463,6 +566,98 @@
       } catch (err) {
         alert('❌ Error al borrar: ' + err.message);
         console.error(err);
+      }
+    }
+
+    // --- REGISTROS VEHÍCULOS ---
+    let DATOS_VEHICULOS = [];
+
+    async function cargarRegistrosVehiculos() {
+      const contenedor = document.getElementById('usos-vehiculo');
+      contenedor.innerHTML = '<p>Cargando registros...</p>';
+      
+      try {
+        const snapshot = await db.collection('uso_vehiculos')
+          .orderBy('fechaHora', 'desc')
+          .limit(100)
+          .get();
+
+        const datos = [];
+        snapshot.forEach(doc => {
+          const r = doc.data();
+          datos.push(r);
+        });
+        
+        DATOS_VEHICULOS = datos;
+        
+        // Actualizar vista si hay vehículo seleccionado
+        const vehiculoActual = document.getElementById('vehiculo-actual').textContent;
+        if (vehiculoActual) {
+          actualizarUsosVehiculo();
+        }
+        
+      } catch (err) {
+        contenedor.innerHTML = '<p>Error al cargar registros</p>';
+        console.error(err);
+      }
+    }
+
+    async function borrarTodosRegistrosVehiculos() {
+      if (!confirm("⚠️ ¿Estás seguro? Esto borrará TODOS los registros de uso de vehículos.")) return;
+      if (!confirm("🔴 ¡CONFIRMACIÓN FINAL! ¿Borrar todos los registros de vehículos?")) return;
+
+      try {
+        const snapshot = await db.collection('uso_vehiculos').get();
+        const batch = db.batch();
+        snapshot.docs.forEach(doc => batch.delete(doc.ref));
+        await batch.commit();
+        alert('✅ Todos los registros de vehículos han sido eliminados.');
+        cargarRegistrosVehiculos();
+        actualizarUsosVehiculo();
+      } catch (err) {
+        alert('❌ Error al borrar: ' + err.message);
+        console.error(err);
+      }
+    }
+
+    function actualizarUsosVehiculo() {
+      const contenedor = document.getElementById('usos-vehiculo');
+      const vehiculoId = document.getElementById('url-vehiculo').value.split('vehiculo=')[1];
+      
+      if (!vehiculoId) {
+        contenedor.innerHTML = '<p>Selecciona un vehículo</p>';
+        return;
+      }
+      
+      const registrosVehiculo = DATOS_VEHICULOS.filter(r => r.vehiculoId === vehiculoId);
+      
+      if (registrosVehiculo.length === 0) {
+        contenedor.innerHTML = '<p>No hay registros de uso</p>';
+      } else {
+        let html = `
+          <table style="width:100%; border-collapse: collapse; margin-top: 10px;">
+            <thead>
+              <tr>
+                <th>Matrícula</th>
+                <th>Modelo</th>
+                <th>Conductor</th>
+                <th>Fecha/Hora</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+        registrosVehiculo.slice(0, 10).forEach(r => {
+          html += `
+            <tr>
+              <td>${r.matricula || '-'}</td>
+              <td>${r.modelo || '-'}</td>
+              <td>${r.nombreConductor}</td>
+              <td>${formatearFecha(r.fechaHora)}</td>
+            </tr>
+          `;
+        });
+        html += '</tbody></table>';
+        contenedor.innerHTML = html;
       }
     }
 
@@ -750,6 +945,157 @@
       }
     }
 
+    // --- VEHÍCULOS ---
+    async function cargarVehiculos() {
+      try {
+        const snapshot = await db.collection('vehiculos').get();
+        const tbody = document.getElementById('cuerpo-vehiculos');
+        
+        if (snapshot.empty) {
+          tbody.innerHTML = '<tr><td colspan="4">No hay vehículos registrados</td></tr>';
+          return;
+        }
+        
+        let filas = '';
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const estado = data.activo ? '✅ Activo' : '❌ Inactivo';
+          
+          filas += `
+            <tr>
+              <td><strong>${data.matricula}</strong></td>
+              <td>${data.modelo}</td>
+              <td>${estado}</td>
+              <td>
+                <button onclick="mostrarDetalleVehiculo('${doc.id}', '${data.matricula}', '${data.modelo}')" style="margin-right: 5px; background: #3498db;">📋</button>
+                <button onclick="toggleVehiculo('${doc.id}', ${data.activo})" style="background: ${data.activo ? '#e74c3c' : '#2ecc71'}; margin-right: 5px;">
+                  ${data.activo ? '❌' : '✅'}
+                </button>
+                <button onclick="eliminarVehiculo('${doc.id}', '${data.matricula}')" style="background: #e74c3c;">
+                  🗑️
+                </button>
+              </td>
+            </tr>
+          `;
+        });
+        
+        tbody.innerHTML = filas;
+        cargarRegistrosVehiculos(); // Cargar registros para mostrar en detalle
+      } catch (err) {
+        console.error("Error al cargar vehículos:", err);
+        document.getElementById('cuerpo-vehiculos').innerHTML = '<tr><td colspan="4">Error al cargar</td></tr>';
+      }
+    }
+
+    async function agregarVehiculo() {
+      const matricula = document.getElementById('matricula-vehiculo').value.trim().toUpperCase();
+      const modelo = document.getElementById('modelo-vehiculo').value.trim();
+      
+      if (!matricula || !modelo) {
+        alert("⚠️ Matrícula y modelo son obligatorios");
+        return;
+      }
+      
+      // Validar formato de matrícula (opcional)
+      if (matricula.length < 5 || matricula.length > 8) {
+        alert("⚠️ Formato de matrícula no válido");
+        return;
+      }
+      
+      try {
+        await db.collection('vehiculos').add({
+          matricula: matricula,
+          modelo: modelo,
+          activo: true,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        alert("✅ Vehículo añadido correctamente");
+        document.getElementById('matricula-vehiculo').value = '';
+        document.getElementById('modelo-vehiculo').value = '';
+        cargarVehiculos();
+      } catch (err) {
+        console.error("Error al añadir vehículo:", err);
+        alert("❌ Error al añadir vehículo");
+      }
+    }
+
+    async function toggleVehiculo(id, estadoActual) {
+      try {
+        await db.collection('vehiculos').doc(id).update({
+          activo: !estadoActual
+        });
+        cargarVehiculos();
+      } catch (err) {
+        console.error("Error al cambiar estado:", err);
+      }
+    }
+
+    // Eliminar vehículo
+    async function eliminarVehiculo(id, matricula) {
+      if (!confirm(`⚠️ ¿Estás seguro de que quieres ELIMINAR el vehículo ${matricula}?`)) return;
+      
+      if (!confirm("🔴 ¡CONFIRMACIÓN FINAL! Esta acción es irreversible.")) return;
+
+      try {
+        // Eliminar el vehículo
+        await db.collection('vehiculos').doc(id).delete();
+        
+        // Eliminar también los registros de uso de este vehículo
+        const registrosSnapshot = await db.collection('uso_vehiculos')
+          .where('vehiculoId', '==', id)
+          .get();
+        
+        if (!registrosSnapshot.empty) {
+          const batch = db.batch();
+          registrosSnapshot.docs.forEach(doc => batch.delete(doc.ref));
+          await batch.commit();
+        }
+        
+        alert(`✅ Vehículo ${matricula} eliminado correctamente.`);
+        cargarVehiculos();
+        
+        // Ocultar detalle si era el vehículo eliminado
+        const vehiculoActual = document.getElementById('url-vehiculo').value.split('vehiculo=')[1];
+        if (vehiculoActual === id) {
+          document.getElementById('detalle-vehiculo').style.display = 'none';
+        }
+        
+      } catch (err) {
+        console.error("Error al eliminar vehículo:", err);
+        alert("❌ Error al eliminar el vehículo.");
+      }
+    }
+
+    async function mostrarDetalleVehiculo(id, matricula, modelo) {
+      document.getElementById('vehiculo-actual').textContent = `${matricula} (${modelo})`;
+      document.getElementById('url-vehiculo').value = `https://erwoo11.github.io/controlhorario/vehiculo.html?vehiculo=${id}`;
+      document.getElementById('detalle-vehiculo').style.display = 'block';
+      
+      // Forzar actualización de usos
+      setTimeout(() => {
+        actualizarUsosVehiculo();
+      }, 100);
+    }
+
+    function copiarUrlVehiculo() {
+      const url = document.getElementById('url-vehiculo').value;
+      if (!url) return;
+      
+      navigator.clipboard.writeText(url).then(() => {
+        alert("✅ Enlace copiado al portapapeles");
+      }).catch(err => {
+        console.warn("No se pudo copiar:", err);
+        const textArea = document.createElement("textarea");
+        textArea.value = url;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+        alert("✅ Enlace copiado (método alternativo)");
+      });
+    }
+
     // Borrar todos los PINs y sus estadísticas
     async function borrarTodosPins() {
       if (!confirm("⚠️ ¿Estás seguro de que quieres BORRAR TODOS los PINs de acceso y sus estadísticas?")) return;
@@ -947,6 +1293,9 @@
 
     window.resetearEstadisticas = resetearEstadisticas;
     window.actualizarResetHora = actualizarResetHora;
+    window.mostrarDetalleVehiculo = mostrarDetalleVehiculo;
+    window.toggleVehiculo = toggleVehiculo;
+    window.eliminarVehiculo = eliminarVehiculo;
 
     // --- PESTAÑAS ---
     document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -957,10 +1306,12 @@
         document.getElementById('tab-registros').classList.toggle('hidden', tab !== 'registros');
         document.getElementById('tab-trabajadores').classList.toggle('hidden', tab !== 'trabajadores');
         document.getElementById('tab-pines').classList.toggle('hidden', tab !== 'pines');
+        document.getElementById('tab-vehiculos').classList.toggle('hidden', tab !== 'vehiculos');
         document.getElementById('tab-estadisticas').classList.toggle('hidden', tab !== 'estadisticas');
         
         if (tab === 'trabajadores') cargarTrabajadores();
         if (tab === 'pines') cargarPinesAcceso();
+        if (tab === 'vehiculos') cargarVehiculos();
         if (tab === 'estadisticas') {
           document.getElementById('contenedores-estadisticas').innerHTML = 
             '<p>Presiona "Cargar contadores" para ver las estadísticas.</p>';
@@ -1007,12 +1358,23 @@
       if (window.datosExportar?.length) exportarExcel(window.datosExportar);
       else alert('No hay datos para exportar.');
     });
+    
+    // Botones vehículos
+    document.getElementById('cargar-vehiculos-detalle').addEventListener('click', cargarRegistrosVehiculos);
+    document.getElementById('borrar-registros-vehiculos-detalle').addEventListener('click', borrarTodosRegistrosVehiculos);
+    document.getElementById('exportar-vehiculos-detalle').addEventListener('click', () => {
+      if (DATOS_VEHICULOS?.length) exportarVehiculosExcel(DATOS_VEHICULOS);
+      else alert('No hay datos de vehículos para exportar.');
+    });
+    
     document.getElementById('btn-agregar').addEventListener('click', agregarTrabajador);
+    document.getElementById('btn-agregar-vehiculo').addEventListener('click', agregarVehiculo);
     document.getElementById('btn-generar-pin').addEventListener('click', generarPINUnico);
     document.getElementById('orden-trabajadores').addEventListener('change', cargarTrabajadores);
     document.getElementById('generar-pin').addEventListener('click', generarPIN);
     document.getElementById('borrar-todos-pins').addEventListener('click', borrarTodosPins);
     document.getElementById('generar-url').addEventListener('click', generarURLAcceso);
+    document.getElementById('copiar-url-vehiculo').addEventListener('click', copiarUrlVehiculo);
     document.getElementById('cargar-contadores').addEventListener('click', cargarEstadisticas);
 
     // Fallback para logo

@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Registro de Vehículo</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: url('fondo.png') repeat;
+      background-size: 300px;
+      background-color: #f9f9f9;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    .main-content {
+      max-width: 500px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    /* Logo */
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .logo {
+      width: 100%;
+      max-width: 300 px;
+      height: auto;
+      border-radius: 16px;
+      box-shadow: 0 6px 25px rgba(0,0,0,0.15);
+      margin: 0 auto 40px;
+      display: block;
+    }
+
+    #logo.fallback {
+      background: #2c3e50;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      font-weight: bold;
+      border-radius: 16px;
+      box-shadow: 0 6px 25px rgba(0,0,0,0.15);
+      margin: 0 auto 40px;
+    }
+
+    /* Contenido */
+    .container {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+
+    input, button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 8px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+
+    button {
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    #mensaje {
+      margin-top: 20px;
+      padding: 12px;
+      text-align: center;
+      border-radius: 6px;
+    }
+
+    .success { background: #d4edda; color: #155724; }
+    .error { background: #f8d7da; color: #721c24; }
+
+    #cargando {
+      color: #3498db;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="main-content">
+    <!-- Logo -->
+    <div class="header">
+      <img src="logo.png" alt="Logo de la Empresa" class="logo" id="logo">
+    </div>
+
+    <!-- Contenido -->
+    <div class="container">
+      <h2 id="titulo-vehiculo">Registro de Vehículo</h2>
+
+      <div id="cargando">Cargando datos del vehículo...</div>
+      <div id="formulario" style="display:none;">
+        <label for="pin-conductor">Introduce tu PIN de trabajador (4 dígitos):</label>
+        <input type="number" id="pin-conductor" placeholder="Ej: 1234" min="1000" max="9999" />
+
+        <button id="registrar-uso">🚐 Registrar uso de vehículo</button>
+      </div>
+
+      <div id="mensaje"></div>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyACVAm_3qDdghFNixYIYF6ToYOf_dIVodE",
+      authDomain: "control-horario-obra.firebaseapp.com",
+      projectId: "control-horario-obra",
+      storageBucket: "control-horario-obra.firebasestorage.app",
+      messagingSenderId: "566402636945",
+      appId: "1:566402636945:web:7a8fa39c373ae62a49b330"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Obtener ID del vehículo de la URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const vehiculoId = urlParams.get('vehiculo');
+
+    let TRABAJADORES = {};
+    let VEHICULO_DATA = null;
+
+    function mostrarMensaje(texto, tipo = 'success') {
+      const msg = document.getElementById('mensaje');
+      msg.textContent = texto;
+      msg.className = tipo;
+    }
+
+    async function verificarVehiculo() {
+      if (!vehiculoId) {
+        mostrarErrorAcceso();
+        return false;
+      }
+
+      try {
+        const doc = await db.collection('vehiculos').doc(vehiculoId).get();
+        if (!doc.exists || !doc.data().activo) {
+          mostrarErrorAcceso();
+          return false;
+        }
+        
+        VEHICULO_DATA = doc.data();
+        document.getElementById('titulo-vehiculo').textContent = 
+          `🚐 ${VEHICULO_DATA.matricula} - ${VEHICULO_DATA.modelo}`;
+        return true;
+      } catch (err) {
+        console.error("Error verificando vehículo:", err);
+        mostrarErrorAcceso();
+        return false;
+      }
+    }
+
+    function mostrarErrorAcceso() {
+      document.body.innerHTML = `
+        <div style="text-align:center; padding:50px; font-family:Arial; background:#f8d7da; color:#721c24;">
+          <h2>❌ Acceso no autorizado</h2>
+          <p>Este enlace solo funciona desde el vehículo asignado.</p>
+          <p>Contacta con el administrador.</p>
+        </div>
+      `;
+    }
+
+    async function cargarTrabajadores() {
+      try {
+        const snapshot = await db.collection('trabajadores').get();
+        if (snapshot.empty) {
+          document.getElementById('cargando').textContent = '⚠️ No hay trabajadores registrados.';
+          return;
+        }
+        const mapa = {};
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          if (data.pin && data.nombre) {
+            mapa[data.pin] = data.nombre;
+          }
+        });
+        TRABAJADORES = mapa;
+        document.getElementById('cargando').style.display = 'none';
+        document.getElementById('formulario').style.display = 'block';
+      } catch (err) {
+        console.error("Error al cargar trabajadores:", err);
+        document.getElementById('cargando').textContent = '❌ Error al cargar. Revisa conexión.';
+      }
+    }
+
+    async function registrarUso() {
+      const pinInput = document.getElementById('pin-conductor');
+      const pin = pinInput.value.trim();
+
+      if (!pin || !TRABAJADORES[pin]) {
+        mostrarMensaje('⚠️ PIN de trabajador no válido', 'error');
+        return;
+      }
+
+      try {
+        // Guardar registro de uso
+        await db.collection('uso_vehiculos').add({
+          vehiculoId: vehiculoId,
+          matricula: VEHICULO_DATA.matricula,
+          modelo: VEHICULO_DATA.modelo,
+          conductorId: pin,
+          nombreConductor: TRABAJADORES[pin],
+          fechaHora: firebase.firestore.FieldValue.serverTimestamp(),
+          timestamp: Date.now()
+        });
+
+        mostrarMensaje(`✅ Uso registrado para ${TRABAJADORES[pin]} en vehículo ${VEHICULO_DATA.matricula}`, 'success');
+        
+        // Redirección automática
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 5000);
+
+        pinInput.value = '';
+      } catch (err) {
+        console.error("Error al registrar uso:", err);
+        mostrarMensaje('❌ Error al registrar: ' + (err.message || 'conexión'), 'error');
+      }
+    }
+
+    // Inicializar
+    verificarVehiculo().then(permitido => {
+      if (permitido) {
+        cargarTrabajadores();
+      }
+    });
+
+    document.getElementById('registrar-uso').addEventListener('click', registrarUso);
+
+    // Fallback para logo
+    document.getElementById('logo').onerror = function() {
+      this.classList.add('fallback');
+      this.textContent = 'LC';
+    };
+  </script>
+</body>
+</html>
