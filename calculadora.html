@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora de Planes — Turnión</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* ─── TOKENS ─── */
+:root {
+  --font:      'Space Grotesk', sans-serif;
+  --ink:       #1e293b;
+  --ink2:      #64748b;
+  --ink3:      #94a3b8;
+  --paper:     #f8fafc;
+  --card:      #ffffff;
+  --border:    #e2e8f0;
+  --accent:    #3b82f6;
+  --accent-d:  #2563eb;
+  --accent-l:  #dbeafe;
+  --accent-m:  #bfdbfe;
+  --ok:        #10b981;
+  --ok-l:      #d1fae5;
+  --ok-m:      #a7f3d0;
+  --err:       #ef4444;
+  --err-l:     #fee2e2;
+  --warn:      #f59e0b;
+  --warn-l:    #fef3c7;
+  --purple:    #8b5cf6;
+  --purple-l:  #ede9fe;
+  --bg:        #f1f5f9;
+  --shadow-lg: 0 20px 60px rgba(0,0,0,0.10), 0 4px 16px rgba(0,0,0,0.06);
+  --r:         10px;
+  --rl:        24px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font);
+  background: linear-gradient(135deg, #f0f7ff 0%, #e8f0fe 50%, #f8fafc 100%);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  color: var(--ink);
+}
+
+/* ─── NAV ─── */
+nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1.1rem 5%;
+  background: rgba(248,250,252,0.92);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 100;
+}
+.nav-logo { display: flex; align-items: center; gap: .5rem; text-decoration: none; font-weight: 700; font-size: 1.05rem; color: var(--ink); }
+.nav-dot  { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; }
+.nav-back {
+  display: inline-flex; align-items: center; gap: .45rem;
+  font-size: .88rem; font-weight: 500; color: var(--ink2);
+  text-decoration: none; transition: color .2s;
+}
+.nav-back:hover { color: var(--ink); }
+.nav-back:hover svg { transform: translateX(-3px); }
+.nav-back svg { transition: transform .2s; }
+
+/* ─── MAIN ─── */
+main { flex: 1; display: flex; align-items: flex-start; justify-content: center; padding: 2.5rem 1.5rem 4rem; }
+
+/* ─── CARD ─── */
+.card {
+  background: var(--card);
+  border-radius: var(--rl);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border);
+  width: 100%; max-width: 640px;
+  overflow: hidden;
+}
+
+/* ─── CARD HEADER ─── */
+.card-head {
+  padding: 2rem 2.25rem 1.75rem;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(135deg, #f0f7ff, #fafbff);
+  text-align: center;
+}
+.page-icon {
+  width: 56px; height: 56px; background: var(--accent-l);
+  border-radius: 16px; display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 1rem; color: var(--accent);
+}
+.card-head h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.03em; color: var(--ink); margin-bottom: .3rem; }
+.card-head p  { font-size: .88rem; color: var(--ink2); }
+
+/* ─── CARD BODY ─── */
+.card-body { padding: 1.75rem 2.25rem 2.25rem; }
+
+/* ─── FORM ─── */
+.form-group { margin-bottom: 1.25rem; }
+label {
+  display: flex; align-items: center; gap: .4rem;
+  margin-bottom: .5rem; color: var(--ink); font-weight: 600; font-size: .9rem;
+}
+label svg { color: var(--accent); flex-shrink: 0; }
+input[type=text], input[type=number], select {
+  width: 100%; padding: .75rem 1rem;
+  border: 1.5px solid var(--border); border-radius: var(--r);
+  font-size: .95rem; font-family: var(--font);
+  color: var(--ink); background: var(--paper);
+  transition: border-color .2s, box-shadow .2s; outline: none;
+}
+input:focus, select:focus {
+  border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,.15); background: #fff;
+}
+small { font-size: .76rem; color: var(--ink3); margin-top: .35rem; display: block; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+/* ─── SECTION LABEL ─── */
+.sec-label {
+  font-size: .72rem; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--accent);
+  display: flex; align-items: center; gap: .35rem;
+  margin-bottom: .75rem;
+}
+.sec-label svg { color: var(--accent); }
+
+/* ─── CONFIG SECTION ─── */
+.config-section {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 1.1rem 1.2rem; margin: 1.25rem 0;
+}
+.config-section h4 {
+  font-size: .82rem; font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--ink2);
+  display: flex; align-items: center; gap: .4rem; margin-bottom: .9rem;
+}
+.config-section h4 svg { color: var(--accent); }
+
+/* ─── PLAN CARDS ─── */
+.plan-cards {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: .6rem; margin-bottom: .5rem;
+}
+.plan-card {
+  border: 2px solid var(--border); border-radius: var(--r);
+  padding: .9rem 1rem; cursor: pointer;
+  transition: all .18s; background: var(--card);
+  position: relative; display: flex; flex-direction: column; gap: .15rem;
+}
+.plan-card:hover { border-color: var(--accent-m); background: var(--accent-l); }
+.plan-card.selected { border-color: var(--accent); background: var(--accent-l); }
+.plan-card.selected::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 3px; background: var(--accent); border-radius: 2px 2px 0 0;
+}
+.plan-card input[type=radio] { display: none; }
+.plan-name { font-weight: 700; font-size: .88rem; color: var(--ink); }
+.plan-price { font-size: 1.2rem; font-weight: 700; color: var(--accent); letter-spacing: -.03em; line-height: 1.2; }
+.plan-price span { font-size: .72rem; font-weight: 500; color: var(--ink2); }
+.plan-limit { font-size: .76rem; color: var(--ink3); white-space: normal; }
+.plan-card.selected .plan-price { color: var(--accent-d); }
+
+/* ─── MODULES GRID ─── */
+.modules-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: .55rem;
+}
+.module-item {
+  display: flex; align-items: center; gap: .55rem;
+  padding: .6rem .85rem; background: var(--card);
+  border-radius: 8px; border: 1px solid var(--border);
+  cursor: pointer; transition: all .15s;
+}
+.module-item:hover { border-color: var(--accent-m); background: var(--accent-l); }
+.module-item.checked { border-color: var(--accent-m); background: var(--accent-l); }
+.module-item input[type=checkbox] { width: 15px; height: 15px; cursor: pointer; accent-color: var(--accent); flex-shrink: 0; }
+.module-item label { margin: 0; cursor: pointer; font-weight: 500; font-size: .83rem; color: var(--ink); display: flex; align-items: center; gap: .35rem; }
+.module-item label svg { color: var(--ink3); }
+
+/* ─── TOGGLE ─── */
+.toggle-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: .85rem 1rem; background: var(--card);
+  border-radius: 8px; border: 1px solid var(--border); margin-top: .6rem;
+}
+.toggle-row span { font-size: .88rem; font-weight: 600; color: var(--ink); display: flex; align-items: center; gap: .4rem; }
+.toggle-row span svg { color: var(--ink3); }
+.toggle-row input[type=checkbox] { width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent); }
+
+/* ─── BILLING TABS ─── */
+.billing-tabs { display: flex; gap: .5rem; margin-bottom: .5rem; }
+.billing-tab {
+  flex: 1; padding: .65rem 1rem; border: 1.5px solid var(--border);
+  background: var(--paper); border-radius: var(--r);
+  cursor: pointer; text-align: center; font-weight: 600;
+  font-size: .85rem; color: var(--ink2); transition: all .18s;
+  display: flex; align-items: center; justify-content: center; gap: .4rem;
+  font-family: var(--font);
+}
+.billing-tab:hover { border-color: var(--accent-m); color: var(--ink); }
+.billing-tab.active { border-color: var(--accent); background: var(--accent-l); color: var(--accent-d); }
+.billing-tab .discount-badge {
+  background: var(--ok-l); color: #065f46; font-size: .68rem; font-weight: 700;
+  padding: .15rem .45rem; border-radius: 20px;
+}
+
+/* ─── PRICE DISPLAY ─── */
+.price-display {
+  background: var(--accent-l); border: 1px solid var(--accent-m);
+  border-radius: var(--r); padding: 1.4rem 1.5rem; margin-top: 1.5rem;
+}
+.price-section { margin-bottom: .9rem; padding-bottom: .9rem; border-bottom: 1px solid var(--accent-m); }
+.price-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.price-row {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: .88rem; color: var(--ink2); margin-bottom: .4rem;
+}
+.price-row:last-child { margin-bottom: 0; }
+.price-row.discount { color: var(--ok); font-weight: 600; }
+.price-row.subtotal { font-weight: 700; color: var(--ink); font-size: .92rem; margin-top: .5rem; padding-top: .5rem; border-top: 1px dashed var(--accent-m); }
+.price-row.iva-row { color: var(--ink2); }
+.price-row.retencion-row { color: var(--warn); font-weight: 600; }
+.price-row.total {
+  font-weight: 700; font-size: 1.3rem; color: var(--accent-d);
+  letter-spacing: -.02em; border-top: 2px solid var(--accent); padding-top: 1rem; margin-top: .5rem;
+}
+.price-row.total-annual {
+  font-weight: 700; font-size: 1rem; color: var(--ink);
+  background: var(--warn-l); border-radius: 8px;
+  padding: .65rem .85rem; margin-top: .75rem;
+}
+.price-note { font-size: .76rem; color: var(--ink3); margin-top: .75rem; text-align: center; }
+
+/* ─── SUMMARY BOX ─── */
+.summary-box {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 1rem 1.2rem; margin-top: 1.25rem;
+}
+.summary-box h4 {
+  font-size: .78rem; font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--ink2);
+  display: flex; align-items: center; gap: .4rem; margin-bottom: .75rem;
+}
+.summary-box h4 svg { color: var(--accent); }
+.summary-tags { display: flex; flex-wrap: wrap; gap: .4rem; }
+.tag {
+  padding: .3rem .7rem; border-radius: 20px;
+  font-size: .75rem; font-weight: 600;
+  background: var(--accent-l); color: var(--accent-d);
+  border: 1px solid var(--accent-m);
+  display: flex; align-items: center; gap: .3rem;
+}
+.tag svg { width: 11px; height: 11px; }
+
+/* ─── BUTTONS ─── */
+.btn-row { display: flex; gap: .75rem; margin-top: 1.5rem; }
+.btn {
+  padding: .85rem 1.4rem; font-size: .9rem; font-weight: 700;
+  border: none; border-radius: var(--r); cursor: pointer; font-family: var(--font);
+  display: inline-flex; align-items: center; justify-content: center; gap: .45rem;
+  transition: transform .15s, box-shadow .15s, background .15s;
+}
+.btn-primary { background: var(--accent); color: #fff; box-shadow: 0 4px 12px rgba(59,130,246,.25); flex: 1; }
+.btn-primary:hover { background: var(--accent-d); transform: translateY(-1px); box-shadow: 0 6px 16px rgba(59,130,246,.32); }
+.btn-secondary { background: var(--bg); color: var(--ink2); border: 1.5px solid var(--border); }
+.btn-secondary:hover { background: var(--border); color: var(--ink); }
+
+/* ─── SPIN ─── */
+.spin {
+  display: inline-block; width: 15px; height: 15px;
+  border: 2px solid rgba(255,255,255,.3); border-top-color: #fff;
+  border-radius: 50%; animation: rot .8s linear infinite;
+}
+@keyframes rot { to { transform: rotate(360deg); } }
+
+/* ─── TOAST ─── */
+.toast {
+  position: fixed; bottom: 2rem; right: 2rem;
+  background: var(--ink); color: #fff;
+  padding: .85rem 1.25rem; border-radius: var(--r);
+  font-size: .88rem; font-weight: 500;
+  display: flex; align-items: center; gap: .5rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,.2);
+  opacity: 0; transform: translateY(10px);
+  transition: opacity .25s, transform .25s;
+  z-index: 999; pointer-events: none;
+}
+.toast.show { opacity: 1; transform: none; }
+.toast.ok   { background: var(--ok); }
+
+@media (max-width: 540px) {
+  .plan-cards { grid-template-columns: repeat(2, 1fr); }
+  .modules-grid { grid-template-columns: 1fr; }
+  .form-row { grid-template-columns: 1fr; }
+  .btn-row { flex-direction: column; }
+  main { padding: 1.5rem 1rem 3rem; }
+  .card-body { padding: 1.5rem 1.25rem 1.75rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+  <a href="gestion_empresas_panel.html" class="nav-logo">
+    <span class="nav-dot"></span>Turnión
+  </a>
+  <a href="gestion_empresas_panel.html" class="nav-back">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    Volver al Panel
+  </a>
+</nav>
+
+<main>
+  <div class="card">
+
+    <!-- Header -->
+    <div class="card-head">
+      <div class="page-icon">
+        <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+          <rect x="2" y="3" width="20" height="14" rx="2"/>
+          <path d="M8 21h8M12 17v4"/>
+          <path d="M7 8h2M7 11h5M13 8l2 3-2 3"/>
+        </svg>
+      </div>
+      <h1>Calculadora de Planes</h1>
+      <p>Configura y calcula el coste de la solución Turnión</p>
+    </div>
+
+    <div class="card-body">
+
+      <!-- ── Plan ── -->
+      <div class="form-group">
+        <div class="sec-label">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          Plan Base
+        </div>
+        <div class="plan-cards" id="planCards">
+          <label class="plan-card selected" data-value="45">
+            <input type="radio" name="plan" value="45" checked>
+            <div class="plan-name">Básico</div>
+            <div class="plan-price">45€<span>/mes</span></div>
+            <div class="plan-limit">Hasta 5 trabajadores</div>
+          </label>
+          <label class="plan-card" data-value="60">
+            <input type="radio" name="plan" value="60">
+            <div class="plan-name">Profesional</div>
+            <div class="plan-price">60€<span>/mes</span></div>
+            <div class="plan-limit">Hasta 15 trabajadores</div>
+          </label>
+          <label class="plan-card" data-value="90">
+            <input type="radio" name="plan" value="90">
+            <div class="plan-name">Empresa</div>
+            <div class="plan-price">90€<span>/mes</span></div>
+            <div class="plan-limit">Hasta 25 trabajadores</div>
+          </label>
+          <label class="plan-card" data-value="120">
+            <input type="radio" name="plan" value="120">
+            <div class="plan-name">Premium</div>
+            <div class="plan-price">120€<span>/mes</span></div>
+            <div class="plan-limit">Hasta 50 trabajadores</div>
+          </label>
+          <label class="plan-card" data-value="180">
+            <input type="radio" name="plan" value="180">
+            <div class="plan-name">Ilimitado</div>
+            <div class="plan-price">180€<span>/mes</span></div>
+            <div class="plan-limit">Sin límites</div>
+          </label>
+        </div>
+      </div>
+
+      <!-- ── Ciclo de facturación ── -->
+      <div class="form-group">
+        <div class="sec-label">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          Ciclo de Facturación
+        </div>
+        <div class="billing-tabs">
+          <button class="billing-tab active" id="tab-monthly" onclick="setBilling('monthly')">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+            Mensual
+          </button>
+          <button class="billing-tab" id="tab-annual" onclick="setBilling('annual')">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><path d="M12 6v6l4 2"/></svg>
+            Anual
+            <span class="discount-badge">-10%</span>
+          </button>
+        </div>
+        <small>El descuento anual se aplica únicamente sobre el precio del plan base</small>
+      </div>
+
+      <!-- ── Módulos adicionales ── -->
+      <div class="form-group">
+        <div class="sec-label">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+          Módulos Adicionales <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--ink3);font-size:.78rem;">(+10€/mes cada uno)</span>
+        </div>
+        <div class="modules-grid" id="modulesGrid">
+          <div class="module-item">
+            <input type="checkbox" id="mod1" class="module-check" onchange="onModuleChange(this)">
+            <label for="mod1">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+              Geolocalización Inteligente
+            </label>
+          </div>
+          <div class="module-item">
+            <input type="checkbox" id="mod2" class="module-check" onchange="onModuleChange(this)">
+            <label for="mod2">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h3l3 3v5h-6V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+              Gestión Flota de Vehículos
+            </label>
+          </div>
+          <div class="module-item">
+            <input type="checkbox" id="mod3" class="module-check" onchange="onModuleChange(this)">
+            <label for="mod3">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              Reportes Mensuales Automáticos
+            </label>
+          </div>
+          <div class="module-item">
+            <input type="checkbox" id="mod4" class="module-check" onchange="onModuleChange(this)">
+            <label for="mod4">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              Informes PDF
+            </label>
+          </div>
+          <div class="module-item">
+            <input type="checkbox" id="mod5" class="module-check" onchange="onModuleChange(this)">
+            <label for="mod5">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+              Informes Excel Avanzado
+            </label>
+          </div>
+          <div class="module-item">
+            <input type="checkbox" id="mod6" class="module-check" onchange="onModuleChange(this)">
+            <label for="mod6">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              Control de Gastos
+            </label>
+          </div>
+          <div class="module-item">
+            <input type="checkbox" id="mod7" class="module-check" onchange="onModuleChange(this)">
+            <label for="mod7">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              Sistema de Puntualidad
+            </label>
+          </div>
+          <div class="module-item">
+            <input type="checkbox" id="mod8" class="module-check" onchange="onModuleChange(this)">
+            <label for="mod8">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+              Generador de Facturas
+            </label>
+          </div>
+          <div class="module-item">
+            <input type="checkbox" id="mod9" class="module-check" onchange="onModuleChange(this)">
+            <label for="mod9">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+              Histórico de Registros
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Config fiscal ── -->
+      <div class="config-section">
+        <h4>
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+          Configuración Fiscal
+        </h4>
+        <div class="form-row" style="margin-bottom:.75rem;">
+          <div class="form-group" style="margin-bottom:0">
+            <label>
+              <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+              IVA (%)
+            </label>
+            <input type="number" id="ivaRate" value="21" min="0" max="100" step="1" oninput="calculateTotal()">
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label>
+              <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              Retención IRPF (%)
+            </label>
+            <input type="number" id="retencionRate" value="15" min="0" max="100" step="1" oninput="calculateTotal()">
+          </div>
+        </div>
+        <div class="toggle-row">
+          <span>
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            Aplicar retención IRPF
+          </span>
+          <input type="checkbox" id="applyRetencion" onchange="calculateTotal()">
+        </div>
+      </div>
+
+      <!-- ── Resultado ── -->
+      <div class="price-display" id="priceDisplay">
+        <!-- Plan base -->
+        <div class="price-section">
+          <div class="price-row">
+            <span>Plan Base:</span>
+            <span id="basePriceDisplay">0€</span>
+          </div>
+          <div class="price-row discount" id="discountRow" style="display:none;">
+            <span>Descuento Anual Plan (10%):</span>
+            <span id="discountDisplay">-0€</span>
+          </div>
+          <div class="price-row subtotal">
+            <span>Subtotal Plan:</span>
+            <span id="planSubtotalDisplay">0€</span>
+          </div>
+        </div>
+
+        <!-- Módulos -->
+        <div class="price-section">
+          <div class="price-row">
+            <span>Módulos (<span id="moduleCount">0</span>):</span>
+            <span id="modulesPriceDisplay">0€</span>
+          </div>
+        </div>
+
+        <!-- Subtotal -->
+        <div class="price-section">
+          <div class="price-row subtotal">
+            <span>Subtotal (sin impuestos):</span>
+            <span id="subtotalDisplay">0€</span>
+          </div>
+        </div>
+
+        <!-- Impuestos -->
+        <div class="price-section">
+          <div class="price-row iva-row">
+            <span>IVA (<span id="ivaRateDisplay">21</span>%):</span>
+            <span id="ivaDisplay">+0€</span>
+          </div>
+          <div class="price-row retencion-row" id="retencionRow" style="display:none;">
+            <span>Retención IRPF (<span id="retencionRateDisplay">15</span>%):</span>
+            <span id="retencionDisplay">-0€</span>
+          </div>
+        </div>
+
+        <!-- Total -->
+        <div class="price-row total">
+          <span>Total Mensual:</span>
+          <span id="totalMonthlyDisplay">0€</span>
+        </div>
+
+        <div class="price-row total-annual" id="annualRow">
+          <span>💰 Total Anual estimado:</span>
+          <span id="totalAnnualDisplay">0€</span>
+        </div>
+
+        <div class="price-note" id="billingNote">* Precios sin IVA ni retenciones incluidas</div>
+      </div>
+
+      <!-- ── Resumen módulos seleccionados ── -->
+      <div class="summary-box" id="summaryBox" style="display:none;">
+        <h4>
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+          Módulos incluidos
+        </h4>
+        <div class="summary-tags" id="summaryTags"></div>
+      </div>
+
+      <!-- ── Acciones ── -->
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="copiarResumen()">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copiar Resumen
+        </button>
+        <button class="btn btn-secondary" onclick="resetCalculadora()">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+          Reiniciar
+        </button>
+      </div>
+
+    </div><!-- /card-body -->
+  </div><!-- /card -->
+</main>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  let billingCycle = 'monthly';
+
+  const planNames = {
+    45: 'Básico', 60: 'Profesional', 90: 'Empresa', 120: 'Premium', 180: 'Ilimitado'
+  };
+  const moduleNames = {
+    mod1:'Geolocalización', mod2:'Flota Vehículos', mod3:'Reportes Automáticos',
+    mod4:'Informes PDF', mod5:'Excel Avanzado', mod6:'Control Gastos',
+    mod7:'Puntualidad', mod8:'Facturas', mod9:'Histórico'
+  };
+
+  // ── Plan cards ──
+  document.querySelectorAll('.plan-card').forEach(card => {
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      card.querySelector('input[type=radio]').checked = true;
+      calculateTotal();
+    });
+  });
+
+  // ── Billing tabs ──
+  function setBilling(cycle) {
+    billingCycle = cycle;
+    document.getElementById('tab-monthly').classList.toggle('active', cycle === 'monthly');
+    document.getElementById('tab-annual').classList.toggle('active', cycle === 'annual');
+    calculateTotal();
+  }
+
+  // ── Module change ──
+  function onModuleChange(cb) {
+    const item = cb.closest('.module-item');
+    item.classList.toggle('checked', cb.checked);
+    calculateTotal();
+  }
+
+  // ── Calculate ──
+  function calculateTotal() {
+    const selectedCard = document.querySelector('.plan-card.selected');
+    const basePrice    = parseFloat(selectedCard?.dataset.value || 45);
+    const isAnnual     = billingCycle === 'annual';
+
+    const checkboxes   = document.querySelectorAll('.module-check');
+    let moduleCount    = 0;
+    checkboxes.forEach(cb => { if (cb.checked) moduleCount++; });
+    const modulesPrice = moduleCount * 10;
+
+    let planDiscount = isAnnual ? basePrice * 0.10 : 0;
+    const planSubtotal = basePrice - planDiscount;
+    const subtotal     = planSubtotal + modulesPrice;
+
+    const ivaRate       = parseFloat(document.getElementById('ivaRate').value) || 0;
+    const retencionRate = parseFloat(document.getElementById('retencionRate').value) || 0;
+    const applyRet      = document.getElementById('applyRetencion').checked;
+
+    const ivaAmount     = subtotal * (ivaRate / 100);
+    const retAmount     = applyRet ? subtotal * (retencionRate / 100) : 0;
+    const totalMonthly  = subtotal + ivaAmount - retAmount;
+    const totalAnnual   = totalMonthly * 12;
+
+    // Update DOM
+    document.getElementById('basePriceDisplay').textContent      = fmt(basePrice);
+    document.getElementById('planSubtotalDisplay').textContent    = fmt(planSubtotal);
+    document.getElementById('moduleCount').textContent            = moduleCount;
+    document.getElementById('modulesPriceDisplay').textContent    = fmt(modulesPrice);
+    document.getElementById('subtotalDisplay').textContent        = fmt(subtotal);
+    document.getElementById('ivaRateDisplay').textContent         = ivaRate;
+    document.getElementById('ivaDisplay').textContent             = '+' + fmt(ivaAmount);
+    document.getElementById('totalMonthlyDisplay').textContent    = fmt(totalMonthly);
+    document.getElementById('totalAnnualDisplay').textContent     = fmt(totalAnnual);
+
+    const discountRow = document.getElementById('discountRow');
+    if (isAnnual) {
+      discountRow.style.display = 'flex';
+      document.getElementById('discountDisplay').textContent = '-' + fmt(planDiscount);
+      document.getElementById('billingNote').textContent = '* Descuento anual aplicado solo al plan base';
+    } else {
+      discountRow.style.display = 'none';
+      document.getElementById('billingNote').textContent = '* Precios sin IVA ni retenciones incluidas';
+    }
+
+    const retencionRow = document.getElementById('retencionRow');
+    if (applyRet) {
+      retencionRow.style.display = 'flex';
+      document.getElementById('retencionRateDisplay').textContent = retencionRate;
+      document.getElementById('retencionDisplay').textContent = '-' + fmt(retAmount);
+    } else {
+      retencionRow.style.display = 'none';
+    }
+
+    updateSummary();
+  }
+
+  function fmt(n) { return n.toFixed(2) + '€'; }
+
+  function updateSummary() {
+    const checked = [...document.querySelectorAll('.module-check')].filter(c => c.checked);
+    const box     = document.getElementById('summaryBox');
+    const tags    = document.getElementById('summaryTags');
+    if (checked.length === 0) { box.style.display = 'none'; return; }
+    box.style.display = 'block';
+    tags.innerHTML = checked.map(cb => `
+      <span class="tag">
+        <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+        ${moduleNames[cb.id] || cb.id}
+      </span>`).join('');
+  }
+
+  function copiarResumen() {
+    const selectedCard = document.querySelector('.plan-card.selected');
+    const planPrice    = parseFloat(selectedCard?.dataset.value || 45);
+    const planName     = planNames[planPrice] || 'Desconocido';
+    const cycle        = billingCycle === 'annual' ? 'Anual' : 'Mensual';
+    const monthly      = document.getElementById('totalMonthlyDisplay').textContent;
+    const annual       = document.getElementById('totalAnnualDisplay').textContent;
+    const mods         = [...document.querySelectorAll('.module-check')]
+                           .filter(c => c.checked).map(c => moduleNames[c.id]).join(', ') || 'Ninguno';
+    const txt = `PRESUPUESTO TURNIÓN\n──────────────────\nPlan: ${planName} (${planPrice}€/mes)\nFact.: ${cycle}\nMódulos: ${mods}\nTotal mensual: ${monthly}\nTotal anual: ${annual}`;
+    navigator.clipboard.writeText(txt).then(() => showToast('✓ Resumen copiado al portapapeles', 'ok')).catch(() => showToast('No se pudo copiar'));
+  }
+
+  function resetCalculadora() {
+    document.querySelectorAll('.plan-card').forEach((c, i) => c.classList.toggle('selected', i === 0));
+    document.querySelector('.plan-card input[type=radio]').checked = true;
+    document.querySelectorAll('.module-check').forEach(c => { c.checked = false; c.closest('.module-item').classList.remove('checked'); });
+    setBilling('monthly');
+    document.getElementById('ivaRate').value = '21';
+    document.getElementById('retencionRate').value = '15';
+    document.getElementById('applyRetencion').checked = false;
+    calculateTotal();
+    showToast('Calculadora reiniciada');
+  }
+
+  function showToast(msg, type = '') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show' + (type ? ' ' + type : '');
+    setTimeout(() => { t.classList.remove('show'); }, 2800);
+  }
+
+  // Init
+  calculateTotal();
+</script>
+</body>
+</html>
