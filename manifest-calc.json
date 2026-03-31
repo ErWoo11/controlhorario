@@ -2,13 +2,13 @@
   "name": "TURNIÓN",
   "short_name": "TURNIÓN",
   "description": "Calculadora para los planes del Sistema Turnión.",
-  "start_url": "/controlhorario/",
+  "start_url": "/controlhorario/calculadora.html",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#d4af37",
   "icons": [
     {
-      "src": "/controlhorario/logo-calc-192.png",
+      "src": "/controlhorario/logo-calc.png",
       "sizes": "192x192",
       "type": "image/png"
     },
